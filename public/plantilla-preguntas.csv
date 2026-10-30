@@ -1,0 +1,3 @@
+﻿id,categoria,pregunta,opcion_a,imagen_a,opcion_b,imagen_b,opcion_c,imagen_c,opcion_d,imagen_d,correcta,explicacion
+planetas-001,Ciencia,¿Cuál de estos planetas es el más grande?,Marte,marte.jpg,Júpiter,jupiter.jpg,Saturno,saturno.jpg,Venus,venus.jpg,B,Júpiter es el planeta más grande del sistema solar.
+animales-001,Naturaleza,¿Cuál de estos animales es un mamífero?,Delfín,delfin.jpg,Tiburón,tiburon.jpg,Pulpo,pulpo.jpg,,,A,El delfín es un mamífero que respira aire.

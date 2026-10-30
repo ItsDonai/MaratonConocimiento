@@ -123,3 +123,13 @@ body.participants {
   }
 }
 
+.participants .team-logo {
+  width: clamp(40px, 5vw, 90px);
+  height: clamp(28px, 4.5vh, 64px);
+  object-fit: contain;
+}
+.participants .encounter-logo {
+  width: clamp(48px, 6vw, 96px);
+  height: clamp(28px, 4.5vh, 54px);
+  object-fit: contain;
+}

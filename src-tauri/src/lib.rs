@@ -1,5 +1,10 @@
 use std::sync::Mutex;
 use tauri::Manager;
+mod bank;
+
+fn bank_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    Ok(app.path().app_data_dir().map_err(|e| e.to_string())?.join("preguntas.sqlite"))
+}
 
 #[derive(Default)]
 struct GameState(Mutex<(serde_json::Value, serde_json::Value)>);
@@ -9,9 +14,15 @@ fn require_admin(window: &tauri::WebviewWindow) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn get_questions(window: tauri::WebviewWindow) -> Result<serde_json::Value, String> {
+async fn get_questions(window: tauri::WebviewWindow, app: tauri::AppHandle) -> Result<Vec<bank::Question>, String> {
     require_admin(&window)?;
-    serde_json::from_str(include_str!("../../src/questions.json")).map_err(|e| e.to_string())
+    bank::load(&bank::open(&bank_path(&app)?)?)
+}
+
+#[tauri::command]
+async fn import_questions(window: tauri::WebviewWindow, app: tauri::AppHandle, questions: Vec<bank::Question>) -> Result<(), String> {
+    require_admin(&window)?;
+    bank::import(&mut bank::open(&bank_path(&app)?)?, &questions)
 }
 
 #[tauri::command]
@@ -52,7 +63,7 @@ async fn participants_fullscreen(window: tauri::WebviewWindow, exit: bool) -> Re
 pub fn run() {
     tauri::Builder::default()
         .manage(GameState::default())
-        .invoke_handler(tauri::generate_handler![get_questions, get_game_state, set_game_state, open_participants, participants_fullscreen])
+        .invoke_handler(tauri::generate_handler![get_questions, import_questions, get_game_state, set_game_state, open_participants, participants_fullscreen])
         .on_window_event(|window, event| {
             if window.label() == "main" && matches!(event, tauri::WindowEvent::Destroyed) {
                 window.app_handle().exit(0);

@@ -3,6 +3,10 @@ import './participants.css';
 import bank from './questions.json';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { act, startGame, publicState, validateBank } from './game.js';
+import { mountImporter } from './import-view.js';
+import { teamLogos, getTeamLogo } from './team-logos.js';
+
+const encounterLogo = new URL('../logos/LOGO ENCUENTRO.png', import.meta.url).href;
 
 const audience = new URLSearchParams(location.search).get('view') === 'participants';
 document.body.classList.add(audience ? 'participants' : 'conductor');
@@ -12,6 +16,8 @@ let state = null;
 let busy = false;
 let message = '';
 let lastPublic = '';
+let availableBank = bank;
+let importing = false;
 
 function el(tag, text, className) {
   const node = document.createElement(tag);
@@ -28,7 +34,10 @@ function button(text, action, disabled = false, className = 'primary') {
 function shell() {
   app.replaceChildren();
   const header = el('header');
-  header.append(el('strong', 'Maratón del Conocimiento'), el('span', audience ? 'Participantes' : 'Control del conductor', 'mode'));
+  const logo = el('img', undefined, 'encounter-logo');
+  logo.src = encounterLogo;
+  logo.alt = 'Logo del encuentro';
+  header.append(logo, el('strong', 'Maratón del Conocimiento'), el('span', audience ? 'Participantes' : 'Control del conductor', 'mode'));
   const main = el('main');
   if (message) { const alert = el('p', message, 'error'); alert.setAttribute('role', 'alert'); main.append(alert); }
   app.append(header, main);
@@ -58,22 +67,40 @@ async function openAudience() {
   } catch (error) { message = `No se pudo abrir la pantalla: ${error}`; render(); }
 }
 function labeled(label, input) {
+  input.setAttribute('aria-label', label);
   const node = el('label', undefined, 'field'); node.append(el('span', label), input); return node;
 }
 function setup(main) {
+  main.append(el('p', `Banco disponible: ${availableBank.length} preguntas.`, 'muted'));
+  if (isTauri()) main.append(button('Importar preguntas desde CSV', () => { importing = true; render(); }));
+  else main.append(el('p', 'La importación con SQLite está disponible en la aplicación de escritorio.', 'muted'));
   main.append(el('h1', 'Configurar partida', 'question'));
   const form = el('form', undefined, 'card');
+  const logos = [];
   const names = [0, 1].map(i => {
     const input = el('input'); input.value = `Equipo ${i + 1}`; input.maxLength = 40; input.required = true;
-    form.append(labeled(`Nombre del equipo ${i + 1}`, input)); return input;
+    form.append(labeled(`Nombre del equipo ${i + 1}`, input));
+    const select = el('select');
+    const none = el('option', 'Sin logo'); none.value = ''; select.append(none);
+    teamLogos.forEach(logo => { const option = el('option', logo.name); option.value = logo.id; select.append(option); });
+    const preview = el('img', undefined, 'team-logo-preview'); preview.hidden = true;
+    select.addEventListener('change', () => {
+      const logo = getTeamLogo(select.value);
+      preview.hidden = !logo;
+      if (logo) { preview.src = logo.image; preview.alt = `Logo ${logo.name}`; }
+      else { preview.removeAttribute('src'); preview.alt = ''; }
+    });
+    logos.push(select);
+    form.append(labeled(`Logo del equipo ${i + 1}`, select), preview);
+    return input;
   });
   const mode = el('select');
   for (const [value, label] of [['limited', 'Número de preguntas'], ['free', 'Ronda libre: todo el banco']]) {
     const option = el('option', label); option.value = value; mode.append(option);
   }
-  const count = el('input'); count.type = 'number'; count.min = '1'; count.max = String(bank.length); count.value = String(bank.length); count.required = true;
+  const count = el('input'); count.type = 'number'; count.min = '1'; count.max = String(availableBank.length); count.value = String(availableBank.length); count.required = true;
   mode.addEventListener('change', () => { count.disabled = mode.value === 'free'; });
-  form.append(labeled('Modalidad', mode), labeled(`Cantidad (1 a ${bank.length})`, count));
+  form.append(labeled('Modalidad', mode), labeled(`Cantidad (1 a ${availableBank.length})`, count));
   form.append(el('p', 'En cada pregunta debes elegir qué equipo comienza. Las preguntas no se repiten durante la partida.', 'muted'));
   const submit = el('button', 'Iniciar partida', 'primary'); submit.type = 'submit'; submit.disabled = busy;
   form.append(submit);
@@ -81,8 +108,8 @@ function setup(main) {
     event.preventDefault(); if (busy) return;
     busy = true; submit.disabled = true;
     try {
-      const questions = isTauri() ? await invoke('get_questions') : bank;
-      await writeState(startGame(questions, names.map(n => n.value), mode.value, Number(count.value)));
+      const questions = isTauri() ? await invoke('get_questions') : availableBank;
+      await writeState(startGame(questions, names.map(n => n.value), mode.value, Number(count.value), undefined, logos.map(logo => logo.value)));
       message = '';
     } catch (error) { message = String(error.message || error); }
     finally { busy = false; render(); }
@@ -91,7 +118,16 @@ function setup(main) {
 }
 function scoreboard(main, game) {
   const row = el('div', undefined, 'scoreboard');
-  game.teams.forEach((team, i) => row.append(el('div', `${team.name}: ${team.score} punto${team.score === 1 ? '' : 's'}${game.activeTeam === i && !game.resolved ? ' · Turno actual' : ''}`, 'card')));
+  game.teams.forEach((team, i) => {
+    const card = el('div', undefined, 'card team-score');
+    const logo = getTeamLogo(team.logo);
+    if (logo) {
+      const image = el('img', undefined, 'team-logo'); image.src = logo.image; image.alt = `Logo ${logo.name}`;
+      card.append(image);
+    }
+    card.append(el('span', `${team.name}: ${team.score} punto${team.score === 1 ? '' : 's'}${game.activeTeam === i && !game.resolved ? ' · Turno actual' : ''}`));
+    row.append(card);
+  });
   main.append(row);
 }
 function question(main, game) {
@@ -139,6 +175,22 @@ function question(main, game) {
 }
 function render() {
   const main = shell();
+  if (!audience && importing) {
+    mountImporter(main, {
+      current: availableBank,
+      back: () => { importing = false; message = ''; render(); },
+      save: async questions => {
+        await invoke('import_questions', { questions });
+        const updated = new Map(availableBank.map(q => [String(q.id), q]));
+        questions.forEach(q => updated.set(String(q.id), q));
+        availableBank = [...updated.values()];
+        importing = false;
+        message = `Importación guardada. Banco disponible: ${availableBank.length} preguntas.`;
+        render();
+      },
+    });
+    return;
+  }
   if (!audience) main.append(button('Abrir pantalla de participantes', openAudience));
   if (!state) {
     if (audience) main.append(el('h1', 'Esperando la partida…', 'question'));
@@ -164,7 +216,8 @@ function render() {
 
 async function boot() {
   try {
-    validateBank(bank);
+    if (!audience && isTauri()) availableBank = await invoke('get_questions');
+    validateBank(availableBank);
     state = await readState(); render();
     if (audience) {
       // Recupera también la partida al reabrir la ventana pública.

@@ -32,20 +32,42 @@ En navegador, se usa almacenamiento local para comunicar las vistas; abrir solo 
 
 ## Preguntas e imágenes
 
-`src/questions.json` contiene el banco. Cada pregunta tiene un `id` único, categoría, texto, 3 o 4 opciones, `answer` (índice desde cero) y explicación. Cada opción contiene `text` e `image`:
+En escritorio, el banco se guarda en **SQLite**, en `preguntas.sqlite` dentro de la carpeta de datos de la aplicación (`%APPDATA%/com.maratonconocimiento.desktop/` en Windows). Las preguntas y las imágenes importadas quedan dentro de esa base y sobreviven al cierre de la aplicación. No se instala un servidor SQL.
+
+`src/questions.json` contiene las preguntas de ejemplo que se cargan solo al crear la base por primera vez. En navegador se usa ese banco de ejemplo. Cada pregunta tiene un `id` único, categoría, texto, 3 o 4 opciones, `answer` (índice desde cero) y explicación. Cada opción contiene `text` e `image`:
 
 ```json
 { "text": "Marte", "image": "/images/q1-1.svg" }
 ```
 
-Las rutas `/images/` corresponden a `public/images/`. Las imágenes actuales son ilustraciones provisionales para probar el funcionamiento. Se pueden sustituir por fotos locales PNG, JPG o WebP actualizando las rutas. No se necesita internet para jugar. Reiniciar Tauri al cambiar el banco, porque Rust lo incorpora durante la compilación.
+Las rutas `/images/` del banco de ejemplo corresponden a `public/images/`. Sus imágenes son ilustraciones provisionales. Las nuevas imágenes se importan desde PNG, JPG o WebP, se adaptan a un máximo de 1024 píxeles y se guardan como JPEG dentro de SQLite (las zonas transparentes quedan blancas). No se necesita internet para jugar. Editar el JSON no modifica una base ya creada: usar el importador para añadir o actualizar preguntas.
+
+## Importar desde CSV
+
+1. En la configuración inicial, pulsar **Importar preguntas desde CSV**. Esta función está disponible en escritorio, antes de iniciar una partida.
+2. Descargar la plantilla del formulario o usar `public/plantilla-preguntas.csv` del proyecto. Las dos filas son ejemplos: proporcionar las imágenes que nombran o sustituirlas por las propias.
+3. Guardar el CSV con codificación **UTF-8**, separado por coma o punto y coma. Los textos que contengan el separador o saltos de línea deben ir entre comillas dobles; una comilla dentro de un campo se escribe dos veces.
+4. Seleccionar el CSV y sus imágenes individuales, o una carpeta de imágenes. En las columnas `imagen_a` a `imagen_d` escribir solo el nombre del archivo, por ejemplo `marte.jpg`, sin rutas. Los nombres no distinguen mayúsculas; no se permiten dos archivos seleccionados con el mismo nombre.
+5. Pulsar **Revisar importación**. Corregir los errores antes de continuar. Se puede expandir la vista previa para inspeccionar textos, imágenes y respuesta correcta.
+6. Confirmar con **Guardar…**. Se añaden los identificadores nuevos y se actualizan los existentes; el resto del banco se conserva. La importación se guarda en una sola transacción: si falla, no se aplica parcialmente.
+
+Columnas: `id,categoria,pregunta,opcion_a,imagen_a,opcion_b,imagen_b,opcion_c,imagen_c,opcion_d,imagen_d,correcta,explicacion`.
+
+Las opciones A, B y C son obligatorias. D es opcional: dejar vacíos tanto su texto como su imagen. `correcta` debe contener A, B, C o D. Mantener un `id` estable para actualizar una pregunta; los ejemplos iniciales usan los ids `1` a `8`. La explicación puede quedar vacía.
+
+Límites: 500 preguntas por CSV, CSV de hasta 2 MB, imagen original de hasta 20 MB y 80 millones de píxeles, lote procesado de hasta 64 MB. Textos: id de hasta 80 caracteres, categoría de 60, pregunta de 180, opción de 80 y explicación de 300. Se recomiendan textos cortos para proyección a 800×600.
+
+El banco guardado se copia al comenzar cada partida. Las preguntas de una partida y su marcador no se guardan permanentemente todavía. La importación por ZIP y el editor de preguntas quedan para una etapa posterior.
 
 ## Organización
 
 - `src/game.js`: reglas, turnos, puntuación, deshacer y proyección del estado público.
 - `src/game.test.js`: pruebas de las reglas y del banco.
+- `src/importer.js` y `src/import-view.js`: lectura, validación, asociación de imágenes y revisión del CSV.
+- `src/importer.test.js`: pruebas de CSV e identificación de imágenes.
 - `src/main.js`: configuración, control y vista de participantes.
 - `src-tauri/src/lib.rs`: estado compartido en memoria y apertura de la ventana pública; solo la ventana principal puede modificarlo.
+- `src-tauri/src/bank.rs`: banco SQLite, importación transaccional y pruebas de persistencia.
 - `src-tauri/tauri.conf.json`: configuración de la aplicación.
 
 La lógica de juego está en JavaScript; Rust conecta las ventanas. La vista pública no muestra la clave hasta acertar o revelar; esto no constituye protección contra inspección del código en esta aplicación local.
@@ -56,6 +78,7 @@ La lógica de juego está en JavaScript; Rust conecta las ventanas. La vista pú
 npm.cmd test
 npm.cmd run build
 cargo check --manifest-path src-tauri/Cargo.toml
+cargo test --manifest-path src-tauri/Cargo.toml --lib
 ```
 
 El diseño visual definitivo queda pendiente.

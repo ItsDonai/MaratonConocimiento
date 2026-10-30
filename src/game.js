@@ -1,3 +1,5 @@
+import { getTeamLogo } from './team-logos.js';
+
 export function validateBank(bank) {
   if (!Array.isArray(bank) || !bank.length) throw new Error('El banco está vacío.');
   const ids = new Set();
@@ -9,7 +11,7 @@ export function validateBank(bank) {
   }
 }
 
-export function startGame(bank, names, mode, count, random = Math.random) {
+export function startGame(bank, names, mode, count, random = Math.random, logos = []) {
   validateBank(bank);
   if (!['limited', 'free'].includes(mode)) throw new Error('Modo inválido.');
   if (mode === 'limited' && (!Number.isInteger(count) || count < 1 || count > bank.length)) throw new Error(`Elige entre 1 y ${bank.length} preguntas.`);
@@ -20,7 +22,7 @@ export function startGame(bank, names, mode, count, random = Math.random) {
   }
   return {
     phase: 'playing', mode,
-    teams: [0, 1].map(i => ({ name: names[i]?.trim().slice(0, 40) || `Equipo ${i + 1}`, score: 0 })),
+    teams: [0, 1].map(i => ({ name: names[i]?.trim().slice(0, 40) || `Equipo ${i + 1}`, score: 0, logo: getTeamLogo(logos[i])?.id || null })),
     questions: questions.slice(0, mode === 'free' ? bank.length : count),
     position: 0, activeTeam: null, attempts: [], resolved: false, revealed: false, feedback: null, history: [],
   };
