@@ -85,6 +85,8 @@ El diseño visual definitivo queda pendiente.
 
 ## Pantalla de participantes y proyectores
 
+En la pantalla inicial, **Configurar logo del sistema** permite elegir un PNG, JPG o WebP, revisar su vista previa y guardarlo sin cambiar código. El logo se conserva en SQLite, mantiene la transparencia y se refleja en ambas ventanas (la pública lo actualiza en unos dos segundos). **Usar logo original** prepara la restauración del logo del encuentro; pulsar **Guardar logo** para confirmarla. Se admite una imagen original de hasta 20 MB, se adapta a un máximo de 1024 píxeles y debe ocupar hasta 2 MB una vez procesada. En navegador, esta preferencia usa el almacenamiento local.
+
 La distribución se ajusta automáticamente al espacio disponible: 800×600 y 1024×768 (4:3), 1024×720, 1920×1080 (16:9) y ultrawide. Las imágenes conservan sus proporciones. En pantallas de relación 2:1 o mayor las opciones se distribuyen en una fila; en las demás se usa una cuadrícula de dos columnas.
 
 En la ventana de participantes, **F11** alterna pantalla completa y **Escape** sale de ella. Para aprovechar una resolución de proyector de 800×600 completa, usar pantalla completa: los bordes y la barra de título de una ventana ocupan parte de esos píxeles. Esta función adapta el contenido y no cambia la resolución configurada en Windows. `src/participants.css` mantiene estos ajustes separados de la vista del conductor.

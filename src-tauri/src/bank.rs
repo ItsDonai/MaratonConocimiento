@@ -1,5 +1,5 @@
 use base64::{engine::general_purpose::STANDARD, Engine};
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, path::Path};
 
@@ -54,6 +54,25 @@ pub fn open(path: &Path) -> Result<Connection, String> {
     db.busy_timeout(std::time::Duration::from_secs(5)).map_err(|e| e.to_string())?;
     initialize(&mut db)?;
     Ok(db)
+}
+
+pub fn system_logo(db: &Connection) -> Result<Option<String>, String> {
+    db.query_row("SELECT value FROM bank_meta WHERE key='system_logo'", [], |r| r.get(0))
+        .optional().map_err(|e| e.to_string())
+}
+
+pub fn save_system_logo(db: &Connection, image: Option<&str>) -> Result<(), String> {
+    if let Some(image) = image {
+        let encoded = image.strip_prefix("data:image/png;base64,").ok_or("El logo debe ser una imagen PNG procesada.")?;
+        if encoded.len() > 2_800_000 { return Err("El logo supera 2 MB. Elige una imagen más pequeña.".into()); }
+        let bytes = STANDARD.decode(encoded).map_err(|_| "El logo contiene datos inválidos.")?;
+        if !bytes.starts_with(b"\x89PNG\r\n\x1a\n") { return Err("El logo no es una imagen PNG válida.".into()); }
+        db.execute("INSERT INTO bank_meta(key,value) VALUES('system_logo',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value", [image])
+            .map_err(|e| e.to_string())?;
+    } else {
+        db.execute("DELETE FROM bank_meta WHERE key='system_logo'", []).map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 pub fn load(db: &Connection) -> Result<Vec<Question>, String> {
@@ -147,8 +166,17 @@ mod tests {
     #[test]
     fn disk_persists_images_after_reopening() {
         let path=std::env::temp_dir().join(format!("maraton-bank-test-{}.sqlite",std::process::id()));
-        { let mut db=open(&path).unwrap(); import(&mut db,&[sample("persistente")]).unwrap(); }
+        {
+            let mut db=open(&path).unwrap(); import(&mut db,&[sample("persistente")]).unwrap();
+            assert_eq!(system_logo(&db).unwrap(),None);
+            save_system_logo(&db,Some(&sample("logo").options[0].image)).unwrap();
+        }
         let db=open(&path).unwrap(); assert_eq!(load(&db).unwrap().last(),Some(&sample("persistente")));
+        let logo=sample("logo").options[0].image.clone();
+        assert_eq!(system_logo(&db).unwrap(),Some(logo.clone()));
+        assert!(save_system_logo(&db,Some("data:image/png;base64,invalid")).is_err());
+        assert_eq!(system_logo(&db).unwrap(),Some(logo));
+        save_system_logo(&db,None).unwrap(); assert_eq!(system_logo(&db).unwrap(),None);
         drop(db); std::fs::remove_file(path).unwrap();
     }
     #[test]

@@ -20,6 +20,17 @@ async fn get_questions(window: tauri::WebviewWindow, app: tauri::AppHandle) -> R
 }
 
 #[tauri::command]
+async fn get_system_logo(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    bank::system_logo(&bank::open(&bank_path(&app)?)?)
+}
+
+#[tauri::command]
+async fn set_system_logo(window: tauri::WebviewWindow, app: tauri::AppHandle, image: Option<String>) -> Result<(), String> {
+    require_admin(&window)?;
+    bank::save_system_logo(&bank::open(&bank_path(&app)?)?, image.as_deref())
+}
+
+#[tauri::command]
 async fn import_questions(window: tauri::WebviewWindow, app: tauri::AppHandle, questions: Vec<bank::Question>) -> Result<(), String> {
     require_admin(&window)?;
     bank::import(&mut bank::open(&bank_path(&app)?)?, &questions)
@@ -63,7 +74,7 @@ async fn participants_fullscreen(window: tauri::WebviewWindow, exit: bool) -> Re
 pub fn run() {
     tauri::Builder::default()
         .manage(GameState::default())
-        .invoke_handler(tauri::generate_handler![get_questions, import_questions, get_game_state, set_game_state, open_participants, participants_fullscreen])
+        .invoke_handler(tauri::generate_handler![get_questions, import_questions, get_system_logo, set_system_logo, get_game_state, set_game_state, open_participants, participants_fullscreen])
         .on_window_event(|window, event| {
             if window.label() == "main" && matches!(event, tauri::WindowEvent::Destroyed) {
                 window.app_handle().exit(0);

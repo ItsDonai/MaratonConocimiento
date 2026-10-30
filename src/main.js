@@ -5,8 +5,20 @@ import { invoke, isTauri } from '@tauri-apps/api/core';
 import { act, startGame, publicState, validateBank } from './game.js';
 import { mountImporter } from './import-view.js';
 import { teamLogos, getTeamLogo } from './team-logos.js';
+import { mountLogoSettings } from './system-logo.js';
 
 const encounterLogo = new URL('../logos/LOGO ENCUENTRO.png', import.meta.url).href;
+let systemLogo = encounterLogo;
+let configuringLogo = false;
+const logoStorageKey = 'maraton-system-logo';
+
+async function refreshSystemLogo() {
+  const saved = isTauri() ? await invoke('get_system_logo') : localStorage.getItem(logoStorageKey);
+  const next = saved || encounterLogo;
+  const changed = next !== systemLogo;
+  systemLogo = next;
+  return changed;
+}
 
 const audience = new URLSearchParams(location.search).get('view') === 'participants';
 document.body.classList.add(audience ? 'participants' : 'conductor');
@@ -35,8 +47,8 @@ function shell() {
   app.replaceChildren();
   const header = el('header');
   const logo = el('img', undefined, 'encounter-logo');
-  logo.src = encounterLogo;
-  logo.alt = 'Logo del encuentro';
+  logo.src = systemLogo;
+  logo.alt = 'Logo del sistema';
   header.append(logo, el('strong', 'Maratón del Conocimiento'), el('span', audience ? 'Participantes' : 'Control del conductor', 'mode'));
   const main = el('main');
   if (message) { const alert = el('p', message, 'error'); alert.setAttribute('role', 'alert'); main.append(alert); }
@@ -71,6 +83,7 @@ function labeled(label, input) {
   const node = el('label', undefined, 'field'); node.append(el('span', label), input); return node;
 }
 function setup(main) {
+  main.append(button('Configurar logo del sistema', () => { configuringLogo = true; render(); }));
   main.append(el('p', `Banco disponible: ${availableBank.length} preguntas.`, 'muted'));
   if (isTauri()) main.append(button('Importar preguntas desde CSV', () => { importing = true; render(); }));
   else main.append(el('p', 'La importación con SQLite está disponible en la aplicación de escritorio.', 'muted'));
@@ -175,6 +188,20 @@ function question(main, game) {
 }
 function render() {
   const main = shell();
+  if (!audience && configuringLogo) {
+    mountLogoSettings(main, {
+      current: systemLogo, defaultLogo: encounterLogo,
+      back: () => { configuringLogo = false; render(); },
+      save: async image => {
+        if (isTauri()) await invoke('set_system_logo', { image });
+        else if (image) localStorage.setItem(logoStorageKey, image);
+        else localStorage.removeItem(logoStorageKey);
+        systemLogo = image || encounterLogo;
+        configuringLogo = false; message = 'Logo del sistema guardado.'; render();
+      },
+    });
+    return;
+  }
   if (!audience && importing) {
     mountImporter(main, {
       current: availableBank,
@@ -216,15 +243,19 @@ function render() {
 
 async function boot() {
   try {
+    await refreshSystemLogo();
     if (!audience && isTauri()) availableBank = await invoke('get_questions');
     validateBank(availableBank);
     state = await readState(); render();
     if (audience) {
+      let lastLogoCheck = Date.now();
       // Recupera también la partida al reabrir la ventana pública.
       const poll = async () => {
         try {
           const next = await readState(); const serialized = JSON.stringify(next);
-          if (serialized !== lastPublic || message) { state = next; lastPublic = serialized; message = ''; render(); }
+          let logoChanged = false;
+          if (Date.now() - lastLogoCheck >= 2000) { logoChanged = await refreshSystemLogo(); lastLogoCheck = Date.now(); }
+          if (serialized !== lastPublic || message || logoChanged) { state = next; lastPublic = serialized; message = ''; render(); }
         } catch { message = 'Se perdió la conexión con el conductor. Reintentando…'; render(); }
         setTimeout(poll, 350);
       };
