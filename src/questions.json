@@ -1,10 +1,190 @@
 [
-  { "id": 1, "category": "Ciencia", "text": "¿Qué planeta es conocido como el planeta rojo?", "options": ["Venus", "Marte", "Júpiter", "Saturno"], "answer": 1, "explanation": "El óxido de hierro en la superficie de Marte le da su característico color rojizo." },
-  { "id": 2, "category": "Geografía", "text": "¿Cuál es la capital de México?", "options": ["Guadalajara", "Monterrey", "Ciudad de México"], "answer": 2, "explanation": "Ciudad de México es la capital del país." },
-  { "id": 3, "category": "Matemáticas", "text": "¿Cuánto es 9 × 7?", "options": ["56", "63", "72", "67"], "answer": 1, "explanation": "Nueve grupos de siete suman 63." },
-  { "id": 4, "category": "Literatura", "text": "¿Quién escribió Don Quijote de la Mancha?", "options": ["Miguel de Cervantes", "Gabriel García Márquez", "Federico García Lorca"], "answer": 0, "explanation": "Miguel de Cervantes publicó la primera parte en 1605." },
-  { "id": 5, "category": "Naturaleza", "text": "¿Qué gas absorben las plantas durante la fotosíntesis?", "options": ["Oxígeno", "Helio", "Dióxido de carbono", "Hidrógeno"], "answer": 2, "explanation": "Las plantas utilizan dióxido de carbono, agua y energía de la luz para producir azúcares." },
-  { "id": 6, "category": "Historia", "text": "¿En qué año comenzó la Independencia de México?", "options": ["1810", "1821", "1910", "1800"], "answer": 0, "explanation": "El inicio se conmemora el 16 de septiembre de 1810." },
-  { "id": 7, "category": "Geografía", "text": "¿Cuál es el océano más grande?", "options": ["Atlántico", "Índico", "Pacífico"], "answer": 2, "explanation": "El Pacífico es el océano de mayor extensión del planeta." },
-  { "id": 8, "category": "Tecnología", "text": "¿Qué componente ejecuta las instrucciones de un programa?", "options": ["El monitor", "El procesador (CPU)", "El teclado", "La impresora"], "answer": 1, "explanation": "La CPU interpreta y ejecuta las instrucciones de los programas." }
+  {
+    "id": 1,
+    "category": "Ciencia",
+    "text": "¿Qué planeta es conocido como el planeta rojo?",
+    "options": [
+      {
+        "text": "Venus",
+        "image": "/images/q1-0.svg"
+      },
+      {
+        "text": "Marte",
+        "image": "/images/q1-1.svg"
+      },
+      {
+        "text": "Júpiter",
+        "image": "/images/q1-2.svg"
+      },
+      {
+        "text": "Saturno",
+        "image": "/images/q1-3.svg"
+      }
+    ],
+    "answer": 1,
+    "explanation": "El óxido de hierro en la superficie de Marte le da su característico color rojizo."
+  },
+  {
+    "id": 2,
+    "category": "Geografía",
+    "text": "¿Cuál es la capital de México?",
+    "options": [
+      {
+        "text": "Guadalajara",
+        "image": "/images/q2-0.svg"
+      },
+      {
+        "text": "Monterrey",
+        "image": "/images/q2-1.svg"
+      },
+      {
+        "text": "Ciudad de México",
+        "image": "/images/q2-2.svg"
+      }
+    ],
+    "answer": 2,
+    "explanation": "Ciudad de México es la capital del país."
+  },
+  {
+    "id": 3,
+    "category": "Matemáticas",
+    "text": "¿Cuánto es 9 × 7?",
+    "options": [
+      {
+        "text": "56",
+        "image": "/images/q3-0.svg"
+      },
+      {
+        "text": "63",
+        "image": "/images/q3-1.svg"
+      },
+      {
+        "text": "72",
+        "image": "/images/q3-2.svg"
+      },
+      {
+        "text": "67",
+        "image": "/images/q3-3.svg"
+      }
+    ],
+    "answer": 1,
+    "explanation": "Nueve grupos de siete suman 63."
+  },
+  {
+    "id": 4,
+    "category": "Literatura",
+    "text": "¿Quién escribió Don Quijote de la Mancha?",
+    "options": [
+      {
+        "text": "Miguel de Cervantes",
+        "image": "/images/q4-0.svg"
+      },
+      {
+        "text": "Gabriel García Márquez",
+        "image": "/images/q4-1.svg"
+      },
+      {
+        "text": "Federico García Lorca",
+        "image": "/images/q4-2.svg"
+      }
+    ],
+    "answer": 0,
+    "explanation": "Miguel de Cervantes publicó la primera parte en 1605."
+  },
+  {
+    "id": 5,
+    "category": "Naturaleza",
+    "text": "¿Qué gas absorben las plantas durante la fotosíntesis?",
+    "options": [
+      {
+        "text": "Oxígeno",
+        "image": "/images/q5-0.svg"
+      },
+      {
+        "text": "Helio",
+        "image": "/images/q5-1.svg"
+      },
+      {
+        "text": "Dióxido de carbono",
+        "image": "/images/q5-2.svg"
+      },
+      {
+        "text": "Hidrógeno",
+        "image": "/images/q5-3.svg"
+      }
+    ],
+    "answer": 2,
+    "explanation": "Las plantas utilizan dióxido de carbono, agua y energía de la luz para producir azúcares."
+  },
+  {
+    "id": 6,
+    "category": "Historia",
+    "text": "¿En qué año comenzó la Independencia de México?",
+    "options": [
+      {
+        "text": "1810",
+        "image": "/images/q6-0.svg"
+      },
+      {
+        "text": "1821",
+        "image": "/images/q6-1.svg"
+      },
+      {
+        "text": "1910",
+        "image": "/images/q6-2.svg"
+      },
+      {
+        "text": "1800",
+        "image": "/images/q6-3.svg"
+      }
+    ],
+    "answer": 0,
+    "explanation": "El inicio se conmemora el 16 de septiembre de 1810."
+  },
+  {
+    "id": 7,
+    "category": "Geografía",
+    "text": "¿Cuál es el océano más grande?",
+    "options": [
+      {
+        "text": "Atlántico",
+        "image": "/images/q7-0.svg"
+      },
+      {
+        "text": "Índico",
+        "image": "/images/q7-1.svg"
+      },
+      {
+        "text": "Pacífico",
+        "image": "/images/q7-2.svg"
+      }
+    ],
+    "answer": 2,
+    "explanation": "El Pacífico es el océano de mayor extensión del planeta."
+  },
+  {
+    "id": 8,
+    "category": "Tecnología",
+    "text": "¿Qué componente ejecuta las instrucciones de un programa?",
+    "options": [
+      {
+        "text": "El monitor",
+        "image": "/images/q8-0.svg"
+      },
+      {
+        "text": "El procesador (CPU)",
+        "image": "/images/q8-1.svg"
+      },
+      {
+        "text": "El teclado",
+        "image": "/images/q8-2.svg"
+      },
+      {
+        "text": "La impresora",
+        "image": "/images/q8-3.svg"
+      }
+    ],
+    "answer": 1,
+    "explanation": "La CPU interpreta y ejecuta las instrucciones de los programas."
+  }
 ]

@@ -1,53 +1,61 @@
 # Maratón del Conocimiento
 
-Primer proyecto de escritorio con **Tauri 2 + Rust + JavaScript**, sin framework de interfaz para facilitar el aprendizaje.
+Aplicación de escritorio con Tauri 2, Rust y JavaScript. Un conductor registra las respuestas que los equipos dicen en voz alta.
 
-## Primera versión
-
-- Ocho preguntas de cultura general, en orden aleatorio.
-- Tres o cuatro opciones con una sola respuesta correcta.
-- Corrección inmediata, explicación y puntuación final.
-- Funciona sin conexión una vez compilada. No guarda partidas todavía.
-
-## Probar la interfaz
-
-Con Node.js instalado, desde esta carpeta:
+## Ejecutar
 
 ```powershell
 npm.cmd install
-npm.cmd run dev
-```
-
-Abrir http://127.0.0.1:1420 en el navegador. Esta modalidad usa el mismo banco de preguntas directamente, sin ejecutar Rust.
-
-## Ejecutar como aplicación de escritorio en Windows
-
-Requisitos oficiales: https://v2.tauri.app/start/prerequisites/
-
-1. Instalar Microsoft C++ Build Tools con la carga de trabajo **Desarrollo para el escritorio con C++** y un Windows SDK.
-2. Instalar Rust mediante https://rustup.rs/ usando la configuración MSVC predeterminada.
-3. Comprobar que Microsoft Edge WebView2 Runtime está instalado.
-4. Abrir una terminal nueva y comprobar `rustc --version` y `cargo --version`.
-5. Ejecutar:
-
-```powershell
 npm.cmd run desktop
 ```
 
-Para generar el instalador: `npm.cmd run desktop:build`. El resultado estará en `src-tauri/target/release/bundle/nsis/`.
+Windows requiere Rust (MSVC), Microsoft C++ Build Tools con Windows SDK y WebView2. Requisitos: https://v2.tauri.app/start/prerequisites/
 
-## Cómo se conectan las piezas
+Para probar en navegador: `npm.cmd run dev` y abrir http://127.0.0.1:1420. Para generar instalador: `npm.cmd run desktop:build`.
 
-1. `index.html` abre la interfaz.
-2. `src/main.js` controla inicio, preguntas, respuestas y resultados.
-3. `src/style.css` define la apariencia.
-4. `src/questions.json` contiene las preguntas. `answer` es el índice correcto: 0 es la primera opción.
-5. En escritorio, JavaScript llama a `get_questions` mediante `invoke`.
-6. `src-tauri/src/lib.rs` recibe esa llamada en Rust y devuelve el banco incorporado en el ejecutable.
-7. `src-tauri/tauri.conf.json` configura la ventana y la compilación.
+## Conducir una partida
 
-La puntuación se calcula en JavaScript para que esta primera versión sea fácil de seguir. Una siguiente práctica puede llevar esa lógica a Rust. Esta versión está pensada para uso local de aprendizaje, sin controles contra trampas.
+1. Escribir los nombres de los dos equipos.
+2. Elegir una cantidad de preguntas o ronda libre (todo el banco).
+3. Abrir la pantalla de participantes y moverla al segundo monitor o proyector. La ventana principal contiene la clave correcta: no proyectarla.
+4. Iniciar la partida. Las preguntas salen aleatoriamente y sin repetirse.
+5. Elegir el equipo que comienza la pregunta; se puede cambiar antes del primer intento.
+6. Seleccionar la opción que el equipo diga. Un acierto suma un punto y cierra los intentos. Un error bloquea esa opción y pasa el turno al otro equipo.
+7. Si ambos fallan, revelar la respuesta es opcional y no suma puntos.
+8. Avanzar manualmente. Al terminar se muestra el ganador o empate.
 
-## Agregar preguntas
+**Deshacer última acción** corrige un turno, intento, punto o revelación de la pregunta actual. No retrocede a una pregunta anterior. **Nueva partida** pide confirmar antes de borrar el marcador.
 
-Copiar una entrada del JSON, asignar un `id` único y escribir `category`, `text`, `options`, `answer` y `explanation`. Cada pregunta debe tener 3 o 4 opciones. Al modificar el banco, reiniciar Tauri para incorporar los cambios al código Rust.
+La pantalla pública solo permite observar. Se actualiza aproximadamente cada 350 ms y puede cerrarse y reabrirse desde el control sin perder la partida. En escritorio Rust conserva el estado en memoria mientras la aplicación está abierta, incluso si se recarga la interfaz. Cerrar el conductor termina la aplicación y descarta la partida. No hay guardado permanente de partidas de escritorio todavía.
+
+En navegador, se usa almacenamiento local para comunicar las vistas; abrir solo un control por origen. Es una modalidad de prueba, no un sistema multiusuario en red.
+
+## Preguntas e imágenes
+
+`src/questions.json` contiene el banco. Cada pregunta tiene un `id` único, categoría, texto, 3 o 4 opciones, `answer` (índice desde cero) y explicación. Cada opción contiene `text` e `image`:
+
+```json
+{ "text": "Marte", "image": "/images/q1-1.svg" }
+```
+
+Las rutas `/images/` corresponden a `public/images/`. Las imágenes actuales son ilustraciones provisionales para probar el funcionamiento. Se pueden sustituir por fotos locales PNG, JPG o WebP actualizando las rutas. No se necesita internet para jugar. Reiniciar Tauri al cambiar el banco, porque Rust lo incorpora durante la compilación.
+
+## Organización
+
+- `src/game.js`: reglas, turnos, puntuación, deshacer y proyección del estado público.
+- `src/game.test.js`: pruebas de las reglas y del banco.
+- `src/main.js`: configuración, control y vista de participantes.
+- `src-tauri/src/lib.rs`: estado compartido en memoria y apertura de la ventana pública; solo la ventana principal puede modificarlo.
+- `src-tauri/tauri.conf.json`: configuración de la aplicación.
+
+La lógica de juego está en JavaScript; Rust conecta las ventanas. La vista pública no muestra la clave hasta acertar o revelar; esto no constituye protección contra inspección del código en esta aplicación local.
+
+## Verificar
+
+```powershell
+npm.cmd test
+npm.cmd run build
+cargo check --manifest-path src-tauri/Cargo.toml
+```
+
+El diseño visual definitivo queda pendiente.

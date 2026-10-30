@@ -10,7 +10,7 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "windows": [{ "title": "Maratón del Conocimiento", "width": 1100, "height": 850, "minWidth": 420, "minHeight": 620 }],
+    "windows": [{ "label": "main", "title": "Maratón · Control del conductor", "width": 1100, "height": 850, "minWidth": 420, "minHeight": 620 }],
     "security": { "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost data:" }
   },
   "bundle": { "active": true, "targets": ["nsis"], "icon": [] }
