@@ -1,4 +1,5 @@
 import { teamLogos, applyTeamColor, teamNameElement } from './team-logos.js';
+import { winnerTrophy } from './celebrations.js';
 
 function el(tag, text, className) {
   const node = document.createElement(tag);
@@ -84,7 +85,7 @@ export function renderTournament(main, view, { audience, scoreboard, question, c
     question(main, { ...view.match, tournament: { ...view.settings, number: view.matches.length + 1 } });
   } else {
     main.classList.add('finished');
-    if (view.match) scoreboard(main, view.match);
+    if (view.match && !['winner', 'champion'].includes(view.phase)) scoreboard(main, view.match);
     if (view.phase === 'lobby') main.append(el('h1', 'Torneo listo', 'question'), el('p', 'Esperando el primer enfrentamiento.'));
     if (view.phase === 'review') {
       main.append(el('h1', 'Encuentro terminado', 'question'), el('p', 'Esperando la confirmación del conductor.'));
@@ -94,9 +95,13 @@ export function renderTournament(main, view, { audience, scoreboard, question, c
       }
     }
     if (['winner', 'champion'].includes(view.phase)) {
+      const result = el('section', undefined, 'victory-panel');
+      result.append(winnerTrophy());
       const title = el('h1', undefined, 'question');
-      title.append(view.phase === 'champion' ? '¡Campeón del torneo: ' : '¡Ganó ', nameNode(view.winnerId), '!'); main.append(title);
-      main.append(el('p', view.phase === 'champion' ? 'Final terminada.' : 'El próximo enfrentamiento está habilitado.'));
+      title.append(view.phase === 'champion' ? '¡Campeón del torneo: ' : '¡Ganó ', nameNode(view.winnerId), '!'); result.append(title);
+      scoreboard(result, view.match);
+      result.append(el('p', view.phase === 'champion' ? 'Final terminada.' : 'El próximo enfrentamiento está habilitado.'));
+      main.append(result);
     }
     if (view.phase === 'exhausted') {
       main.append(el('h1', 'Encuentro pausado', 'question'), el('p', 'Se agotaron las preguntas y el marcador está empatado. Importa preguntas nuevas para desempatar; no se repetirán preguntas.'));

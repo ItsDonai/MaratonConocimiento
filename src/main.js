@@ -2,6 +2,7 @@ import './style.css';
 import './participants.css';
 import './conductor.css';
 import './themes.css';
+import './celebrations.css';
 import bank from './questions.json';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { act, startGame, publicState, validateBank } from './game.js';
@@ -11,13 +12,14 @@ import { mountLogoSettings } from './system-logo.js';
 import { startTournament, tournamentAct, publicTournament, extendTournamentBank } from './tournament.js';
 import { mountTournamentSetup, renderTournament } from './tournament-view.js';
 import { applyTheme, normalizeTheme, mountThemeSettings } from './themes.js';
+import { updateCelebrations, winnerTrophy, animationPresets, playCelebration, stopCelebrations } from './celebrations.js';
 
 const encounterLogo = new URL('../logos/LOGO ENCUENTRO.png', import.meta.url).href;
 let systemLogo = encounterLogo;
 let configuringLogo = false;
 let configuringTheme = false;
+let testingAnimations = false;
 let currentTheme = 'classic';
-let lastCelebration = '';
 async function refreshTheme() {
   const saved = isTauri() ? await invoke('get_theme') : localStorage.getItem('maraton-theme');
   const next = normalizeTheme(saved);
@@ -67,6 +69,7 @@ function shell() {
   logo.src = systemLogo;
   logo.alt = 'Logo del sistema';
   header.append(logo, el('strong', 'Maratón del Conocimiento'), el('span', audience ? 'Participantes' : 'Control del conductor', 'mode'));
+  if (!audience) header.append(button('Probar animaciones', () => { stopCelebrations(); testingAnimations = true; render(); }, false, 'choice animation-test-button'));
   const main = el('main');
   if (message) { const alert = el('p', message, 'error'); alert.setAttribute('role', 'alert'); main.append(alert); }
   app.append(header, main);
@@ -236,16 +239,28 @@ function question(main, game) {
 }
 function render() {
   renderScreen();
-  const game = state?.kind === 'tournament' ? state.match : state;
-  const q = game?.question || game?.questions?.[game.position];
-  const signature = game?.feedback?.correct ? `${q?.id}:${game.position}:${game.feedback.team}` : '';
-  if (signature && signature !== lastCelebration && currentTheme === 'pop' && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    document.querySelector('.choice.correct')?.animate([{ transform: 'scale(.96)' }, { transform: 'scale(1.025)', offset: .6 }, { transform: 'scale(1)' }], { duration: 450, easing: 'ease-out' });
-  }
-  lastCelebration = signature;
+  if (!testingAnimations) updateCelebrations(state);
 }
 function renderScreen() {
   const main = shell();
+  if (!audience && testingAnimations) {
+    main.append(el('h1', 'Probar animaciones', 'question'), el('p', 'Esta prueba solo se muestra en el administrador. No cambia puntos, preguntas ni resultados.'));
+    const panel = el('section', undefined, 'card');
+    const preview = el('div', undefined, 'animation-preview');
+    const status = el('p', 'Selecciona una animación.'); status.setAttribute('role', 'status');
+    const trophy = winnerTrophy(); trophy.hidden = true;
+    const answer = el('div', '✓ ¡Respuesta correcta!', 'choice correct'); answer.hidden = true;
+    preview.append(trophy, answer, status); panel.append(preview);
+    animationPresets.forEach(preset => panel.append(button(preset.name, () => {
+      trophy.hidden = preset.id !== 'winner'; answer.hidden = preset.id !== 'correct';
+      status.textContent = matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'Movimiento reducido activo: se muestra el resultado sin partículas.' : `Probando: ${preset.name}.`;
+      playCelebration(preset.id, preview);
+    })));
+    panel.append(button('Detener efectos', () => { stopCelebrations(); status.textContent = 'Efectos detenidos.'; }));
+    main.append(panel, button('Volver al administrador', () => { stopCelebrations(); testingAnimations = false; render(); }));
+    return;
+  }
   if (!audience && configuringTheme) {
     mountThemeSettings(main, {
       current: currentTheme,
@@ -327,15 +342,18 @@ function renderScreen() {
   }
   const game = audience ? state : publicState(state);
   main.classList.add(game.phase === 'playing' ? 'playing' : 'finished');
-  scoreboard(main, game);
   if (game.phase === 'finished') {
+    const result = el('section', undefined, 'victory-panel');
     const [a, b] = game.teams;
+    if (a.score !== b.score) result.append(winnerTrophy());
     const title = el('h1', undefined, 'question');
     if (a.score === b.score) title.textContent = '¡Empate!';
     else title.append('¡Ganó ', teamNameElement(a.score > b.score ? a : b), '!');
-    main.append(title);
-    main.append(el('p', `Partida terminada · ${game.total} preguntas.`));
-  } else question(main, game);
+    result.append(title);
+    scoreboard(result, game);
+    result.append(el('p', `Partida terminada · ${game.total} preguntas.`));
+    main.append(result);
+  } else { scoreboard(main, game); question(main, game); }
   if (!audience) main.append(button('Nueva partida', async () => {
     if (!window.confirm('¿Volver a la configuración? Se borrará el marcador actual.')) return;
     busy = true;

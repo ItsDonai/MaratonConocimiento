@@ -99,6 +99,12 @@ El diseño visual definitivo queda pendiente.
 
 ## Pantalla de participantes y proyectores
 
+### Celebraciones
+
+Las respuestas correctas lanzan una ráfaga breve de confeti. Las victorias muestran una copa y fuegos artificiales de partículas; en torneo se activan después de confirmar al ganador, también para el campeón de la final. Un empate no activa una celebración de victoria. Los efectos funcionan en ambos temas, se detienen al cambiar de pregunta o pantalla y no se repiten con las actualizaciones del marcador. No bloquean los botones ni añaden sonido.
+
+Se utiliza `canvas-confetti`, incluido localmente en la aplicación, sin conexiones a servicios externos. La preferencia de movimiento reducido del sistema desactiva las partículas y las animaciones, manteniendo visible la copa y el resultado. El comportamiento está separado en `src/celebrations.js` y `src/celebrations.css`.
+
 ### Temas de apariencia
 
 **Configurar tema**, en la pantalla inicial, permite elegir entre **Clásico** y **Concurso pop**. La selección se puede previsualizar, guardar o cancelar. En escritorio se conserva en SQLite; en navegador se guarda localmente. La ventana pública se actualiza en unos dos segundos. El tema cambia la apariencia de ambas ventanas, conserva los colores de los equipos y respeta el ajuste a los proyectores. Concurso pop incluye una animación breve de acierto que se omite si el sistema tiene activada la preferencia de movimiento reducido.
