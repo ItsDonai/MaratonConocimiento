@@ -15,6 +15,20 @@ Para probar en navegador: `npm.cmd run dev` y abrir http://127.0.0.1:1420. Para 
 
 ## Conducir una partida
 
+### Torneo de varios equipos
+
+Desde la pantalla inicial, **Crear torneo de varios equipos** registra entre 2 y 32 equipos, cada uno con su nombre y logo. El administrador elige los dos participantes de cada enfrentamiento; no hay eliminación automática, por lo que un equipo que perdió puede volver a jugar.
+
+Para cada encuentro se elige **límite de preguntas** o **primero en alcanzar los puntos**. El turno inicial de cada pregunta sigue siendo decisión del conductor. Al cerrar la pregunta que alcanza el límite, si hay un ganador, el conductor revisa y pulsa **Confirmar ganador**. Hasta confirmar no se habilita otro encuentro. La pantalla pública muestra al ganador y el control añade el resultado, marcador y cantidad de preguntas al historial temporal. **Corregir antes de confirmar** permite volver a la última pregunta y deshacer una selección accidental.
+
+Si el límite de preguntas termina empatado, se continúa con preguntas extra hasta desempatar. El control mantiene una lista de equipos con victorias. Cuando se decide jugar la final, marcar **Es la final del torneo** y seleccionar dos equipos que hayan ganado al menos un encuentro. Confirmar el resultado de la final muestra al campeón y cierra el torneo.
+
+Las preguntas se consideran usadas desde que se muestran, incluso si ambos equipos fallan. No se repiten entre encuentros del mismo torneo; las preguntas reservadas pero nunca mostradas siguen disponibles. Al cerrar un enfrentamiento, gana el equipo con más puntos. Esto también aplica si se agota el banco antes de alcanzar la meta. El botón Cerrar enfrentamiento permite cerrar manualmente y después confirmar al ganador. Si hay empate y el banco se agota, el encuentro se pausa para incorporar preguntas de desempate. **Importar más preguntas para el torneo** permite incorporar preguntas con identificadores nuevos; después usar **Continuar con las preguntas añadidas**. Importar una actualización con un id ya existente no libera esa pregunta para reutilizarla.
+
+El torneo y sus resultados son temporales en escritorio: cerrar la aplicación o confirmar **Salir del torneo** descarta el historial y el control de preguntas usadas. SQLite conserva el banco y el logo del sistema. En la prueba de navegador, el torneo usa el mismo almacenamiento local que las partidas.
+
+### Partida individual de dos equipos
+
 1. Escribir los nombres de los dos equipos.
 2. Elegir una cantidad de preguntas o ronda libre (todo el banco).
 3. Abrir la pantalla de participantes y moverla al segundo monitor o proyector. La ventana principal contiene la clave correcta: no proyectarla.
@@ -84,6 +98,12 @@ cargo test --manifest-path src-tauri/Cargo.toml --lib
 El diseño visual definitivo queda pendiente.
 
 ## Pantalla de participantes y proyectores
+
+### Temas de apariencia
+
+**Configurar tema**, en la pantalla inicial, permite elegir entre **Clásico** y **Concurso pop**. La selección se puede previsualizar, guardar o cancelar. En escritorio se conserva en SQLite; en navegador se guarda localmente. La ventana pública se actualiza en unos dos segundos. El tema cambia la apariencia de ambas ventanas, conserva los colores de los equipos y respeta el ajuste a los proyectores. Concurso pop incluye una animación breve de acierto que se omite si el sistema tiene activada la preferencia de movimiento reducido.
+
+Los temas se registran en `src/themes.js` y sus estilos están separados en `src/themes.css`. Para añadir otro, registrar un id, nombre y descripción, añadir estilos bajo `body[data-theme="nuevo-id"]` y admitir el id en `save_theme` de `src-tauri/src/bank.rs`. Las reglas del juego no dependen del tema.
 
 En la pantalla inicial, **Configurar logo del sistema** permite elegir un PNG, JPG o WebP, revisar su vista previa y guardarlo sin cambiar código. El logo se conserva en SQLite, mantiene la transparencia y se refleja en ambas ventanas (la pública lo actualiza en unos dos segundos). **Usar logo original** prepara la restauración del logo del encuentro; pulsar **Guardar logo** para confirmarla. Se admite una imagen original de hasta 20 MB, se adapta a un máximo de 1024 píxeles y debe ocupar hasta 2 MB una vez procesada. En navegador, esta preferencia usa el almacenamiento local.
 

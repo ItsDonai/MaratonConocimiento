@@ -61,6 +61,16 @@ pub fn system_logo(db: &Connection) -> Result<Option<String>, String> {
         .optional().map_err(|e| e.to_string())
 }
 
+pub fn theme(db: &Connection) -> Result<String, String> {
+    Ok(db.query_row("SELECT value FROM bank_meta WHERE key='theme'", [], |r| r.get(0))
+        .optional().map_err(|e| e.to_string())?.unwrap_or_else(|| "classic".into()))
+}
+pub fn save_theme(db: &Connection, theme: &str) -> Result<(), String> {
+    if !["classic", "pop"].contains(&theme) { return Err("El tema seleccionado no está disponible.".into()); }
+    db.execute("INSERT INTO bank_meta(key,value) VALUES('theme',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value", [theme]).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 pub fn save_system_logo(db: &Connection, image: Option<&str>) -> Result<(), String> {
     if let Some(image) = image {
         let encoded = image.strip_prefix("data:image/png;base64,").ok_or("El logo debe ser una imagen PNG procesada.")?;
@@ -169,9 +179,15 @@ mod tests {
         {
             let mut db=open(&path).unwrap(); import(&mut db,&[sample("persistente")]).unwrap();
             assert_eq!(system_logo(&db).unwrap(),None);
+            assert_eq!(theme(&db).unwrap(),"classic");
+            save_theme(&db,"pop").unwrap();
             save_system_logo(&db,Some(&sample("logo").options[0].image)).unwrap();
         }
         let db=open(&path).unwrap(); assert_eq!(load(&db).unwrap().last(),Some(&sample("persistente")));
+        assert_eq!(theme(&db).unwrap(),"pop");
+        assert!(save_theme(&db,"unknown").is_err());
+        assert_eq!(theme(&db).unwrap(),"pop");
+        save_theme(&db,"classic").unwrap(); assert_eq!(theme(&db).unwrap(),"classic");
         let logo=sample("logo").options[0].image.clone();
         assert_eq!(system_logo(&db).unwrap(),Some(logo.clone()));
         assert!(save_system_logo(&db,Some("data:image/png;base64,invalid")).is_err());

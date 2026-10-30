@@ -1,0 +1,62 @@
+/* Espaciado exclusivo del administrador; la proyección conserva su distribución. */
+.conductor .home-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.conductor .home-actions button {
+  margin: 0;
+  width: 100%;
+  min-height: 56px;
+  padding: 16px 20px;
+  text-align: left;
+}
+@media (max-width: 650px) {
+  .conductor .home-actions { grid-template-columns: 1fr; }
+}
+.conductor main {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 32px 28px 48px;
+}
+.conductor main > * { margin-top: 0; margin-bottom: 0; }
+.conductor main > button { align-self: flex-start; }
+.conductor .card { padding: 28px; }
+.conductor .card + .card { margin-top: 0; }
+.conductor form.card { display: grid; gap: 22px; }
+.conductor .field { gap: 10px; margin-bottom: 22px; }
+.conductor form > .field,
+.conductor .tournament-team-row .field { margin: 0; }
+.conductor .field > span { font-weight: 600; }
+.conductor .field input,
+.conductor .field select { min-height: 46px; }
+.conductor .field input[type="checkbox"] { min-height: 22px; width: 22px; }
+.conductor button { margin: 6px 12px 6px 0; }
+.conductor .card button + button { margin-left: 0; }
+.conductor form > button { justify-self: start; margin: 0; }
+.conductor .question { margin: 0 0 22px; line-height: 1.25; }
+.conductor main > .question { margin: 0; }
+.conductor .card h2 { margin: 0 0 18px; }
+.conductor .card p { margin: 0 0 18px; }
+.conductor .card p:last-child { margin-bottom: 0; }
+.conductor .card .muted { margin: 16px 0 0; }
+.conductor form > p { margin: 0; }
+.conductor .scoreboard { gap: 20px; }
+.conductor .scoreboard .card { padding: 20px; }
+.conductor .choices { gap: 16px; }
+.conductor .choices .choice { margin: 0; padding: 16px; }
+.conductor .feedback { margin-top: 22px; padding: 18px; }
+.conductor .feedback p { margin: 10px 0 0; }
+.conductor .tournament-team-row { gap: 20px; padding: 22px 0; }
+.conductor .tournament-team-row:first-child { padding-top: 0; }
+.conductor .tournament-team-row:last-child { margin-bottom: 8px; }
+.conductor .tournament-history summary { line-height: 1.6; }
+.conductor .tournament-history ol { padding-left: 24px; margin: 20px 0; }
+.conductor .tournament-history li { margin: 14px 0; line-height: 1.6; }
+.conductor .import-panel details { margin: 18px 0; padding: 16px; }
+@media (max-width: 650px) {
+  .conductor main { padding: 24px 16px 36px; gap: 18px; }
+  .conductor .card { padding: 20px; }
+  .conductor .tournament-team-row { gap: 14px; }
+}
