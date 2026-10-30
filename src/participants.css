@@ -1,0 +1,125 @@
+/* El espacio disponible, y no una altura fija de las imágenes, gobierna la proyección. */
+body.participants {
+  --screen-gap: clamp(6px, 1.2vh, 16px);
+  --screen-pad: clamp(8px, 1.6vh, 24px);
+  font-size: clamp(14px, min(1.8vw, 2.6vh), 28px);
+}
+.participants #app {
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.participants header {
+  width: 100%;
+  max-width: none;
+  padding: var(--screen-gap) var(--screen-pad);
+  font-size: clamp(13px, min(1.6vw, 2.4vh), 26px);
+}
+.participants main {
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  max-width: 2560px;
+  min-height: 0;
+  min-width: 0;
+  padding: var(--screen-pad);
+  display: flex;
+  flex-direction: column;
+  gap: var(--screen-gap);
+}
+.participants main.playing {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+.participants main.playing:has(> .error) {
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+}
+.participants .scoreboard {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  gap: var(--screen-gap);
+}
+.participants .scoreboard .card {
+  margin: 0;
+  padding: var(--screen-gap) var(--screen-pad);
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+.participants main > .muted {
+  margin: 0;
+  line-height: 1.35;
+  font-size: clamp(12px, min(1.5vw, 2.1vh), 22px);
+}
+.participants .question-card {
+  min-height: 0;
+  min-width: 0;
+  margin: 0;
+  padding: var(--screen-pad);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: var(--screen-gap);
+}
+.participants .eyebrow {
+  margin: 0;
+  line-height: 1.35;
+  font-size: clamp(11px, min(1.3vw, 1.8vh), 20px);
+}
+.participants .question {
+  margin: 0;
+  font-size: clamp(21px, min(3vw, 4.2vh), 54px);
+  line-height: 1.3;
+  letter-spacing: -.025em;
+  overflow-wrap: anywhere;
+}
+.participants .option-grid {
+  min-height: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: var(--screen-gap);
+}
+.participants .option-grid .choice {
+  min-height: 0;
+  min-width: 0;
+  margin: 0;
+  padding: var(--screen-gap);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--screen-gap);
+  line-height: 1.35;
+  font-size: clamp(15px, min(2vw, 2.8vh), 34px);
+}
+.participants .option-grid img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+.participants .option-grid span {
+  overflow-wrap: anywhere;
+}
+.participants .feedback {
+  margin: 0;
+  padding: var(--screen-gap);
+  line-height: 1.35;
+  font-size: clamp(13px, min(1.7vw, 2.3vh), 28px);
+  overflow-wrap: anywhere;
+}
+.participants .feedback p {
+  margin: 0;
+  line-height: 1.35;
+}
+.participants .feedback strong + p { margin-top: 4px; }
+.participants .finished { justify-content: center; }
+.participants .error { margin: 0; }
+
+/* En 21:9 y superiores, cuatro opciones en fila aprovechan el ancho. */
+@media (min-aspect-ratio: 2/1) {
+  .participants .option-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .participants .option-grid:has(> :last-child:nth-child(3)) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+

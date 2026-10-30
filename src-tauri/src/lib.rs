@@ -35,17 +35,24 @@ async fn open_participants(window: tauri::WebviewWindow, app: tauri::AppHandle) 
         public.set_focus().map_err(|e| e.to_string())?;
     } else {
         tauri::WebviewWindowBuilder::new(&app, "participants", tauri::WebviewUrl::App("index.html?view=participants".into()))
-            .title("Maratón · Participantes").inner_size(1100.0, 850.0).min_inner_size(420.0, 620.0)
+            .title("Maratón · Participantes").inner_size(1024.0, 720.0).min_inner_size(640.0, 480.0)
             .build().map_err(|e| e.to_string())?;
     }
     Ok(())
+}
+
+#[tauri::command]
+async fn participants_fullscreen(window: tauri::WebviewWindow, exit: bool) -> Result<(), String> {
+    if window.label() != "participants" { return Err("Esta acción corresponde a la pantalla de participantes.".into()); }
+    let fullscreen = !exit && !window.is_fullscreen().map_err(|e| e.to_string())?;
+    window.set_fullscreen(fullscreen).map_err(|e| e.to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .manage(GameState::default())
-        .invoke_handler(tauri::generate_handler![get_questions, get_game_state, set_game_state, open_participants])
+        .invoke_handler(tauri::generate_handler![get_questions, get_game_state, set_game_state, open_participants, participants_fullscreen])
         .on_window_event(|window, event| {
             if window.label() == "main" && matches!(event, tauri::WindowEvent::Destroyed) {
                 window.app_handle().exit(0);

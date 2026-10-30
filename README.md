@@ -59,3 +59,9 @@ cargo check --manifest-path src-tauri/Cargo.toml
 ```
 
 El diseño visual definitivo queda pendiente.
+
+## Pantalla de participantes y proyectores
+
+La distribución se ajusta automáticamente al espacio disponible: 800×600 y 1024×768 (4:3), 1024×720, 1920×1080 (16:9) y ultrawide. Las imágenes conservan sus proporciones. En pantallas de relación 2:1 o mayor las opciones se distribuyen en una fila; en las demás se usa una cuadrícula de dos columnas.
+
+En la ventana de participantes, **F11** alterna pantalla completa y **Escape** sale de ella. Para aprovechar una resolución de proyector de 800×600 completa, usar pantalla completa: los bordes y la barra de título de una ventana ocupan parte de esos píxeles. Esta función adapta el contenido y no cambia la resolución configurada en Windows. `src/participants.css` mantiene estos ajustes separados de la vista del conductor.

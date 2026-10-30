@@ -1,4 +1,5 @@
 import './style.css';
+import './participants.css';
 import bank from './questions.json';
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import { act, startGame, publicState, validateBank } from './game.js';
@@ -103,7 +104,7 @@ function question(main, game) {
     controls.append(el('p', 'Puedes cambiar el equipo inicial antes del primer intento. Un error pasa el turno automáticamente.', 'muted'));
     main.append(controls);
   }
-  const card = el('section', undefined, 'card');
+  const card = el('section', undefined, 'card question-card');
   card.append(el('p', q.category, 'eyebrow'), el('h1', q.text, 'question'));
   const options = el('div', undefined, 'choices option-grid');
   q.options.forEach((option, i) => {
@@ -145,6 +146,7 @@ function render() {
     return;
   }
   const game = audience ? state : publicState(state);
+  main.classList.add(game.phase === 'playing' ? 'playing' : 'finished');
   scoreboard(main, game);
   if (game.phase === 'finished') {
     const [a, b] = game.teams;
@@ -178,3 +180,17 @@ async function boot() {
   } catch (error) { message = `No se pudo cargar la partida: ${error.message || error}`; shell().append(button('Reintentar', boot)); }
 }
 boot();
+
+// La ventana pública se puede proyectar sin bordes; Escape siempre permite salir.
+if (audience) {
+  window.addEventListener('keydown', async event => {
+    if (event.key !== 'F11' && event.key !== 'Escape') return;
+    event.preventDefault();
+    try {
+      if (isTauri()) await invoke('participants_fullscreen', { exit: event.key === 'Escape' });
+      else if (event.key === 'Escape' || document.fullscreenElement) {
+        if (document.fullscreenElement) await document.exitFullscreen();
+      } else await document.documentElement.requestFullscreen();
+    } catch (error) { message = `No se pudo cambiar la pantalla completa: ${error}`; render(); }
+  });
+}
