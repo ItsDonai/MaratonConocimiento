@@ -12,3 +12,12 @@ body[data-theme="pop"] .winner-trophy{background:#49315b;border-color:#ad7cc8;bo
 .animation-preview [hidden]{display:none}
 .conductor header .animation-test-button{margin:0;font-size:13px;padding:10px 14px}
 @media(max-width:650px){.conductor header{flex-wrap:wrap}.conductor header .animation-test-button{margin-left:auto}}
+.feedback-symbol{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:990}
+.feedback-symbol-tile{display:grid;place-items:center;width:clamp(160px,34vh,280px);height:clamp(160px,34vh,280px);border-radius:30%;font-size:clamp(112px,24vh,200px);font-weight:800;line-height:1;border:2px solid;box-shadow:0 12px 42px #0003}
+.feedback-symbol-correct .feedback-symbol-tile{color:#16663c;background:#e2f5e7;border-color:#68c88f}
+.feedback-symbol-incorrect .feedback-symbol-tile{color:#a32943;background:#fce9ed;border-color:#e38ba9}
+body[data-theme="pop"] .feedback-symbol-correct .feedback-symbol-tile{color:#a4f0bd;background:#17382b;border-color:#68c88f}
+body[data-theme="pop"] .feedback-symbol-incorrect .feedback-symbol-tile{color:#ffc5d4;background:#472338;border-color:#e38ba9}
+.winner-trophy{position:relative}
+.winner-check{position:absolute;right:-6%;bottom:0;display:grid;place-items:center;width:34%;height:34%;border-radius:50%;font-size:.38em;font-weight:800;line-height:1;color:#16663c;background:#e2f5e7;border:2px solid #68c88f}
+body[data-theme="pop"] .winner-check{color:#a4f0bd;background:#17382b}

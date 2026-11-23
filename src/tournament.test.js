@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startTournament, tournamentAct as act, publicTournament, remainingQuestions, extendTournamentBank } from './tournament.js';
+import { startTournament, tournamentAct as act, publicTournament, remainingQuestions, replaceTournamentBank } from './tournament.js';
 
 const samples = JSON.parse(fs.readFileSync('src/questions.json', 'utf8'));
 const bank = Array.from({ length: 20 }, (_, i) => ({ ...samples[i % samples.length], id: `q-${i}` }));
 const teams = ['Uno', 'Dos', 'Tres', 'Cuatro'].map((name, i) => ({ name, logo: i % 2 ? 'diti' : 'dica' }));
-const start = (data = bank) => startTournament(data, teams);
+const start = (data = bank) => startTournament(data, teams, { manualRounds: false });
 const match = (s, a = 0, b = 1, mode = 'questions', limit = 1, final = false) => act(s, { type: 'start_match', teamIds: [s.roster[a].id, s.roster[b].id], mode, limit, final });
 const correct = (s, team = 0) => {
   s = act(s, { type: 'team', team });
@@ -93,7 +93,7 @@ test('agotamiento con empate pausa y admite nuevas preguntas sin reutilizar ids'
   s = correct(s, 0); s = correct(s, 1);
   assert.equal(s.phase, 'exhausted'); assert.equal(s.winnerId, null);
   assert.throws(() => act(s, { type: 'continue' }));
-  s = extendTournamentBank(s, bank.slice(0, 4));
+  s = replaceTournamentBank(s, bank.slice(0, 4));
   s = act(s, { type: 'continue' });
   assert.equal(s.phase, 'playing'); assert.equal(s.usedIds.length, 3);
   assert.equal(new Set(s.usedIds).size, 3);
@@ -128,4 +128,95 @@ test('corrección antes de confirmar restaura el punto sin liberar preguntas vis
   assert.equal(publicView.bank, undefined); assert.equal(publicView.match.questions, undefined);
   assert.equal(publicView.match.question.answer, undefined);
   assert.equal(publicView.match.teams[0].logo, 'dica');
+});
+
+test('pantalla de espera conserva ganador, historial y preguntas usadas', () => {
+  assert.throws(() => act(start(), { type: 'show_waiting' }));
+  let s = confirm(correct(match(start())));
+  const before = structuredClone(s);
+  s = act(s, { type: 'show_waiting' });
+  assert.equal(publicTournament(s).waiting, true);
+  assert.equal(s.winnerId, before.winnerId);
+  assert.deepEqual(s.matches, before.matches);
+  assert.deepEqual(s.usedIds, before.usedIds);
+  s = match(s, 2, 3);
+  assert.equal(s.waiting, false); assert.equal(s.phase, 'playing');
+});
+
+test('reemplazar banco del torneo elimina las preguntas anteriores y conserva historial y uso', () => {
+  let state = confirm(correct(match(start())));
+  const previous = structuredClone(state);
+  const replacement = [{ ...bank[0], id: 'nuevo-banco' }, { ...bank[1], id: state.usedIds[0] }];
+  const next = replaceTournamentBank(state, replacement);
+  assert.deepEqual(next.bank, replacement);
+  assert.deepEqual(next.matches, state.matches);
+  assert.deepEqual(next.usedIds, state.usedIds);
+  assert.deepEqual(remainingQuestions(next).map(q => q.id), ['nuevo-banco']);
+  assert.deepEqual(state, previous);
+  assert.throws(() => replaceTournamentBank(match(start()), replacement));
+});
+
+test('rondas manuales: cuatro preguntas, empate y nuevos equipos sin repetir', () => {
+  let state = startTournament(bank, teams);
+  state = match(state, 0, 1, 'questions', 4);
+  const seen = new Set();
+  for (let i = 0; i < 4; i++) {
+    seen.add(state.match.questions[state.match.position].id);
+    state = failBoth(state);
+  }
+  assert.equal(state.phase, 'review');
+  assert.equal(state.winnerId, null);
+  assert.equal(state.usedIds.length, 4);
+  state = act(state, { type: 'confirm_winner' });
+  assert.equal(state.phase, 'winner');
+  assert.equal(state.matches[0].questions, 4);
+  assert.equal(remainingQuestions(state).length, 16);
+  state = match(state, 2, 3, 'questions', 4);
+  for (let i = 0; i < 4; i++) {
+    const id = state.match.questions[state.match.position].id;
+    assert.ok(!seen.has(id)); seen.add(id);
+    state = correct(state);
+  }
+  state = act(state, { type: 'confirm_winner' });
+  assert.equal(state.matches.length, 2);
+  assert.equal(remainingQuestions(state).length, 12);
+  state = match(state, 0, 3, 'questions', 4, true);
+  assert.equal(state.settings.final, false);
+  assert.equal(state.phase, 'playing');
+});
+
+test('rondas manuales permiten cerrar un empate sin consumir preguntas adicionales', () => {
+  let state = match(startTournament(bank, teams), 0, 1, 'questions', 4);
+  state = act(state, { type: 'close_match' });
+  assert.equal(state.phase, 'review');
+  state = act(state, { type: 'confirm_winner' });
+  assert.equal(state.phase, 'winner');
+  assert.equal(state.usedIds.length, 1);
+});
+
+test('siguiente partido conserva seis preguntas y descarta las seis ya usadas', () => {
+  let state = match(startTournament(bank, teams), 0, 1, 'questions', 6);
+  for (let i = 0; i < 6; i++) state = correct(state);
+  state = confirm(state);
+  const used = new Set(state.usedIds);
+  assert.equal(used.size, 6);
+  state = act(state, { type: 'next_match' });
+  assert.equal(publicTournament(state).selectingNext, true);
+  state = match(state, 2, 3, 'questions', 2);
+  assert.equal(state.settings.limit, 6);
+  for (let i = 0; i < 6; i++) {
+    assert.ok(!used.has(state.match.questions[state.match.position].id));
+    state = correct(state);
+  }
+  state = confirm(state);
+  assert.equal(state.matches[1].questions, 6);
+  state = act(state, { type: 'next_match' });
+  state = match(state, 0, 3, 'questions', 6);
+  for (let i = 0; i < 6; i++) state = correct(state);
+  state = confirm(state);
+  assert.equal(remainingQuestions(state).length, 2);
+  assert.throws(() => act(state, { type: 'next_match' }), /suficientes/);
+  const restarted = startTournament(bank, teams);
+  assert.equal(remainingQuestions(restarted).length, 20);
+  assert.deepEqual(restarted.usedIds, []);
 });

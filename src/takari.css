@@ -1,0 +1,20 @@
+.takari-victory{width:min(320px,100%);aspect-ratio:1;background-repeat:no-repeat;background-size:200% 100%;background-position:0 0;image-rendering:pixelated;flex-shrink:0}
+.takari-victory.is-playing{animation:takari-victory-poses 1.6s step-end infinite}
+@keyframes takari-victory-poses{0%,100%{background-position:0 0}50%{background-position:100% 0}}
+@media(prefers-reduced-motion:reduce){.takari-victory.is-playing{animation:none;background-position:0 0}}
+.takari-sleeping{position:relative;width:min(320px,100%);aspect-ratio:1;flex-shrink:0}
+.takari-sleeping>img{display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+.takari-sleep-zs{position:absolute;left:60%;top:8%;width:25%;height:24%;pointer-events:none;color:#78528f;--z-pixel:3px}
+.takari-sleep-zs>span{position:absolute;left:0;top:70%;opacity:.7;display:grid;grid-template-columns:repeat(5,var(--z-pixel));grid-template-rows:repeat(7,var(--z-pixel));width:calc(5 * var(--z-pixel));height:calc(7 * var(--z-pixel))}
+.takari-sleep-zs .z-pixel{background:currentColor}
+.takari-sleep-zs>span:nth-child(2){left:30%;top:35%;--sleep-delay:-.9s}
+.takari-sleep-zs>span:nth-child(3){left:60%;top:0;--sleep-delay:-1.8s}
+.takari-sleeping.is-playing .takari-sleep-zs>span{animation:takari-sleep-letters 2.7s steps(13,end) infinite;animation-delay:var(--sleep-delay,0s)}
+@keyframes takari-sleep-letters{0%{opacity:0;transform:translate(0,9px)}25%{opacity:1}75%{opacity:.8}100%{opacity:0;transform:translate(13px,-30px)}}
+@media(min-height:900px){.takari-sleep-zs{--z-pixel:4px}}
+body[data-theme="pop"] .takari-sleep-zs{color:#d7b2ff}
+.takari-waiting{display:flex;flex-direction:column;align-items:center;gap:clamp(12px,2vh,24px);text-align:center;width:100%;min-width:0}
+.takari-waiting .takari-sleeping{width:clamp(160px,45vh,340px);max-width:100%}
+.takari-waiting .question,.takari-waiting p{margin:0;overflow-wrap:anywhere;max-width:100%}
+.participants main.waiting-screen{justify-content:center}
+@media(prefers-reduced-motion:reduce){.takari-sleeping.is-playing .takari-sleep-zs>span{animation:none;opacity:.7}}

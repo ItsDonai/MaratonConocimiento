@@ -1,13 +1,38 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startGame, act, publicState } from './game.js';
+import { startGame, act, publicState, usedQuestionIds, unusedQuestions } from './game.js';
 
 const bank = JSON.parse(fs.readFileSync(new URL('./questions.json', import.meta.url)));
 const start = (mode = 'limited', count = 2) => startGame(bank, ['Sol', 'Luna'], mode, count);
 const choose = (s, team = 0) => act(s, { type: 'team', team });
 const answer = (s, option) => act(s, { type: 'answer', option });
 const wrong = s => s.questions[s.position].options.map((_, i) => i).filter(i => i !== s.questions[s.position].answer);
+
+test('nueva partida descuenta las preguntas mostradas y no las vuelve a seleccionar', () => {
+  let game = start('limited', 2);
+  let used = usedQuestionIds([], game);
+  assert.equal(unusedQuestions(bank, used).length, bank.length - 1);
+  game = answer(choose(game), game.questions[0].answer);
+  game = act(game, { type: 'next' });
+  game = answer(choose(game), game.questions[1].answer);
+  game = act(game, { type: 'next' });
+  used = usedQuestionIds(used, game);
+  used = usedQuestionIds(JSON.parse(JSON.stringify(used)), null);
+  const remaining = unusedQuestions(bank, used);
+  assert.equal(remaining.length, bank.length - 2);
+  assert.ok(startGame(remaining, [], 'free').questions.every(q => !used.includes(String(q.id))));
+  assert.equal(unusedQuestions(bank, []).length, bank.length);
+});
+
+test('abandonar una partida solo consume preguntas mostradas y normaliza identificadores', () => {
+  const game = start('limited', 3);
+  const used = usedQuestionIds([game.questions[0].id], game);
+  assert.equal(used.length, 1);
+  assert.equal(unusedQuestions(game.questions, used).length, 2);
+  assert.deepEqual(unusedQuestions([{ id: 7 }, { id: 8 }], ['7']), [{ id: 8 }]);
+  assert.deepEqual(usedQuestionIds(used, { kind: 'tournament' }), used);
+});
 
 test('cantidad válida, ronda libre, banco sin repetidos e imágenes existentes', () => {
   assert.equal(start().questions.length, 2);
@@ -102,4 +127,13 @@ test('ronda libre recorre todo el banco una sola vez y sin filtrar claves al pú
   }
   assert.equal(seen.size, bank.length);
   assert.equal(s.teams.reduce((n,t) => n+t.score, 0), bank.length);
+});
+
+test('permite jugar preguntas con opciones solo de texto', () => {
+  const textBank = structuredClone(bank.slice(0, 1));
+  textBank[0].options.forEach(option => { delete option.image; });
+  let state = startGame(textBank, ['Sol', 'Luna'], 'free', 1);
+  state = choose(state);
+  state = answer(state, state.questions[0].answer);
+  assert.equal(state.teams[0].score, 1);
 });

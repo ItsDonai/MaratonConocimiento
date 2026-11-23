@@ -1,12 +1,12 @@
 import { startGame, act, publicState, validateBank } from './game.js';
 import { getTeamLogo } from './team-logos.js';
 
-export function startTournament(bank, teams) {
+export function startTournament(bank, teams, { manualRounds = true } = {}) {
   validateBank(bank);
   if (teams.length < 2 || teams.length > 32) throw new Error('Registra entre 2 y 32 equipos.');
   const roster = teams.map((t, i) => ({ id: `team-${i + 1}`, name: t.name.trim().slice(0, 40), logo: getTeamLogo(t.logo)?.id || null }));
   if (roster.some(t => !t.name) || new Set(roster.map(t => t.name.toLowerCase())).size !== roster.length) throw new Error('Cada equipo necesita un nombre distinto.');
-  return { kind: 'tournament', phase: 'lobby', roster, bank: structuredClone(bank), usedIds: [], matches: [], match: null, settings: null, winnerId: null, reason: null };
+  return { kind: 'tournament', manualRounds, phase: 'lobby', roster, bank: structuredClone(bank), usedIds: [], matches: [], match: null, settings: null, winnerId: null, reason: null };
 }
 
 export function remainingQuestions(tournament) {
@@ -14,11 +14,11 @@ export function remainingQuestions(tournament) {
   return tournament.bank.filter(q => !used.has(String(q.id)));
 }
 
-export function extendTournamentBank(state, bank) {
+export function replaceTournamentBank(state, bank) {
   validateBank(bank);
   const next = structuredClone(state);
-  const ids = new Set(next.bank.map(q => String(q.id)));
-  for (const q of bank) if (!ids.has(String(q.id))) { next.bank.push(structuredClone(q)); ids.add(String(q.id)); }
+  if (!['lobby', 'winner', 'exhausted'].includes(state.phase)) throw new Error('Solo puedes reemplazar el banco entre encuentros o durante un desempate pausado.');
+  next.bank = structuredClone(bank);
   return next;
 }
 
@@ -30,34 +30,47 @@ function scoresWinner(match) {
 export function tournamentAct(state, action) {
   if (state?.kind !== 'tournament') throw new Error('No hay un torneo activo.');
   const next = structuredClone(state);
+  if (action.type === 'next_match') {
+    if (next.phase !== 'winner') throw new Error('Primero confirma el resultado del partido anterior.');
+    if (remainingQuestions(next).length < next.settings.limit) throw new Error(`No quedan suficientes preguntas para otro partido de ${next.settings.limit}. Vuelve al inicio para reiniciar el banco.`);
+    next.selectingNext = true; next.waiting = true;
+    return next;
+  }
+  if (action.type === 'show_waiting') {
+    if (next.phase !== 'winner') throw new Error('La espera se muestra después de confirmar el ganador de un encuentro.');
+    next.waiting = true;
+    return next;
+  }
   if (action.type === 'close_match') {
     if (!['playing', 'exhausted'].includes(next.phase)) throw new Error('No hay un encuentro abierto para cerrar.');
     const winner = scoresWinner(next.match);
-    if (winner === null) throw new Error('El encuentro está empatado. Continúa con preguntas de desempate.');
-    next.phase = 'review'; next.winnerId = next.settings.teamIds[winner]; next.reason = 'closed';
+    if (winner === null && !next.manualRounds) throw new Error('El encuentro está empatado. Continúa con preguntas de desempate.');
+    next.phase = 'review'; next.winnerId = winner === null ? null : next.settings.teamIds[winner]; next.reason = 'closed';
     return next;
   }
   if (action.type === 'start_match') {
     if (!['lobby', 'winner'].includes(next.phase)) throw new Error('Primero termina y confirma el encuentro actual.');
     const teams = action.teamIds?.map(id => next.roster.find(t => t.id === id));
     if (teams?.length !== 2 || teams.some(t => !t) || teams[0].id === teams[1].id) throw new Error('Selecciona dos equipos diferentes.');
-    if (action.final) {
+    if (action.final && !next.manualRounds) {
       const winners = new Set(next.matches.map(m => m.winnerId));
       if (!teams.every(t => winners.has(t.id))) throw new Error('La final requiere dos equipos que hayan ganado un encuentro.');
     }
+    if (next.manualRounds && next.settings) action = { ...action, mode: 'questions', limit: next.settings.limit };
     const remaining = remainingQuestions(next);
     if (!remaining.length) throw new Error('No quedan preguntas nuevas. Importa más preguntas para continuar.');
     if (!['points', 'questions'].includes(action.mode) || !Number.isInteger(action.limit) || action.limit < 1 || action.limit > remaining.length) throw new Error(`El límite debe ser un entero entre 1 y ${remaining.length}.`);
     next.match = startGame(remaining, teams.map(t => t.name), 'free', 0, Math.random, teams.map(t => t.logo));
-    next.settings = { teamIds: teams.map(t => t.id), mode: action.mode, limit: action.limit, final: !!action.final };
+    next.settings = { manualRounds: !!next.manualRounds, teamIds: teams.map(t => t.id), mode: action.mode, limit: action.limit, final: !next.manualRounds && !!action.final };
     next.usedIds.push(String(next.match.questions[0].id));
-    next.phase = 'playing'; next.winnerId = null; next.reason = null;
+    next.phase = 'playing'; next.winnerId = null; next.reason = null; next.waiting = false; next.selectingNext = false;
     return next;
   }
   if (action.type === 'confirm_winner') {
-    if (next.phase !== 'review' || next.winnerId === null) throw new Error('El encuentro aún no tiene un ganador para confirmar.');
+    if (next.phase !== 'review' || (!next.manualRounds && next.winnerId === null)) throw new Error('El encuentro aún no tiene un ganador para confirmar.');
     next.matches.push({ number: next.matches.length + 1, ...next.settings, scores: next.match.teams.map(t => t.score), winnerId: next.winnerId, questions: next.match.position + 1, reason: next.reason });
     next.phase = next.settings.final ? 'champion' : 'winner';
+    next.waiting = false;
     return next;
   }
   if (action.type === 'reopen') {
@@ -88,7 +101,10 @@ export function tournamentAct(state, action) {
     ? next.match.teams.some(t => t.score >= next.settings.limit)
     : count >= next.settings.limit;
   const exhausted = count === next.match.questions.length;
-  if (winner !== null && (reached || exhausted)) {
+  if (next.manualRounds && (reached || exhausted)) {
+    next.phase = 'review'; next.winnerId = winner === null ? null : next.settings.teamIds[winner];
+    next.reason = reached ? 'limit' : 'exhausted';
+  } else if (winner !== null && (reached || exhausted)) {
     next.phase = 'review'; next.winnerId = next.settings.teamIds[winner];
     next.reason = reached ? 'limit' : 'exhausted';
   } else if (exhausted) {
@@ -104,8 +120,8 @@ export function publicTournament(state) {
   const match = state.match ? publicState(state.match) : null;
   if (match && state.phase !== 'playing') match.question = null;
   return {
-    kind: state.kind, phase: state.phase, roster: state.roster, settings: state.settings,
-    matches: state.matches, winnerId: state.winnerId, reason: state.reason,
+    kind: state.kind, selectingNext: !!state.selectingNext, manualRounds: !!state.manualRounds, phase: state.phase, roster: state.roster, settings: state.settings,
+    matches: state.matches, winnerId: state.winnerId, reason: state.reason, waiting: !!state.waiting,
     used: state.usedIds.length, remaining: remainingQuestions(state).length, match,
   };
 }

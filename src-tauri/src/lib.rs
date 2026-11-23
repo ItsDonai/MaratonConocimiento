@@ -1,6 +1,22 @@
 use std::sync::Mutex;
 use tauri::Manager;
+use tauri_plugin_dialog::DialogExt;
 mod bank;
+
+#[tauri::command]
+async fn save_question_template(window: tauri::WebviewWindow, app: tauri::AppHandle) -> Result<bool, String> {
+    require_admin(&window)?;
+    let Some(file) = app.dialog().file()
+        .set_parent(&window)
+        .set_title("Guardar plantilla de preguntas")
+        .set_file_name("plantilla-preguntas.csv")
+        .add_filter("CSV UTF-8", &["csv"])
+        .blocking_save_file() else { return Ok(false); };
+    let path = file.into_path().map_err(|e| e.to_string())?;
+    std::fs::write(path, include_bytes!("../../public/plantilla-preguntas.csv"))
+        .map_err(|e| format!("No se pudo guardar la plantilla: {e}"))?;
+    Ok(true)
+}
 
 fn bank_path(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
     Ok(app.path().app_data_dir().map_err(|e| e.to_string())?.join("preguntas.sqlite"))
@@ -83,8 +99,9 @@ async fn participants_fullscreen(window: tauri::WebviewWindow, exit: bool) -> Re
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .manage(GameState::default())
-        .invoke_handler(tauri::generate_handler![get_questions, import_questions, get_theme, set_theme, get_system_logo, set_system_logo, get_game_state, set_game_state, open_participants, participants_fullscreen])
+        .invoke_handler(tauri::generate_handler![get_questions, import_questions, save_question_template, get_theme, set_theme, get_system_logo, set_system_logo, get_game_state, set_game_state, open_participants, participants_fullscreen])
         .on_window_event(|window, event| {
             if window.label() == "main" && matches!(event, tauri::WindowEvent::Destroyed) {
                 window.app_handle().exit(0);

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { parseQuestionCsv, matchImages, summarizeImport, columns } from './importer.js';
 
-const row = ['quiz-1', 'Ciencia', '¿Cuál es el más grande?', 'Marte', 'marte.jpg', 'Júpiter', 'jupiter.jpg', 'Saturno', 'saturno.png', '', '', 'B', 'Júpiter es el más grande.'];
+const row = ['quiz-1', 'Ciencia', '¿Cuál es el más grande?', 'Marte', 'marte.jpg', 'Júpiter', 'jupiter.jpg', 'Saturno', 'saturno.png', '', '', 'B'];
 function csv(rows = [row], delimiter = ',') {
   return '\uFEFF' + [columns, ...rows].map(r => r.map(s => `"${String(s).replaceAll('"', '""')}"`).join(delimiter)).join('\r\n');
 }
@@ -27,7 +27,7 @@ test('rechaza ids duplicados, respuesta inexistente y opción incompleta', () =>
   assert.match(parseQuestionCsv(csv([row, row])).errors.join(), /repite/);
   const invalid = [...row]; invalid[11] = 'D';
   assert.match(parseQuestionCsv(csv([invalid])).errors.join(), /correcta/);
-  invalid[9] = 'Venus'; invalid[10] = '';
+  invalid[9] = 'Venus'; invalid[10] = 'invalida.svg';
   assert.match(parseQuestionCsv(csv([invalid])).errors.join(), /Imagen D/);
 });
 test('detecta encabezados incorrectos, CSV vacío y registros desiguales', () => {
@@ -41,7 +41,7 @@ test('no acepta rutas, URLs, SVG ni textos demasiado largos', () => {
     const invalid = [...row]; invalid[4] = filename;
     assert.ok(parseQuestionCsv(csv([invalid])).errors.length);
   }
-  const invalid = [...row]; invalid[2] = 'x'.repeat(181);
+  const invalid = [...row]; invalid[2] = 'x'.repeat(1201);
   assert.ok(parseQuestionCsv(csv([invalid])).errors.length);
 });
 test('vincula imágenes ignorando mayúsculas, detecta faltantes y nombres ambiguos', () => {
@@ -54,4 +54,14 @@ test('vincula imágenes ignorando mayúsculas, detecta faltantes y nombres ambig
 });
 test('resumen distingue altas y actualizaciones con id numérico o texto', () => {
   assert.deepEqual(summarizeImport([{ id:'1' }, { id:'nueva' }], [{ id:1 }]), { added:1, updated:1 });
+});
+
+test('importa texto largo sin imágenes ni columna de explicación', () => {
+  const textColumns = columns.filter(c => !c.startsWith('imagen_'));
+  const values = ['texto-1','Historia','Una pregunta extensa. '.repeat(30),'Respuesta extensa. '.repeat(10),'Segunda respuesta','Tercera respuesta','','A'];
+  const parsed = parseQuestionCsv([textColumns, values].map(r => r.join(',')).join('\n'));
+  assert.deepEqual(parsed.errors, []);
+  assert.equal(parsed.questions[0].options.length, 3);
+  assert.equal(parsed.questions[0].options[0].image, '');
+  assert.deepEqual(matchImages(parsed.questions, []).errors, []);
 });

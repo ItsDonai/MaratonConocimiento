@@ -1,0 +1,19 @@
+{
+  "name": "Takari - referencia cromatica del boceto original",
+  "source": "logos/takari/takari.png",
+  "method": "Colores RGB muestreados del PNG original; seleccion discreta para pixel art a partir de sus degradados.",
+  "outline": "#000000",
+  "white": "#FFFFFF",
+  "skin": { "base": "#DDA814", "shadow": "#DF9909", "highlight": "#DDAB16" },
+  "bellyAndWingMembranes": { "base": "#F0DB5E", "shadow": "#EDD454", "highlight": "#F4E36B" },
+  "polo": { "base": "#007B6F", "shadow": "#003738", "highlight": "#007C70" },
+  "horns": { "base": "#969696", "shadow": "#909090", "highlight": "#AAAAAA" },
+  "rules": [
+    "Usar negro puro #000000 para todos los contornos y separaciones.",
+    "No introducir rojo, granate, marron ni morado en los bordes.",
+    "Mantener la transparencia; evitar halos de color y suavizado en los contornos pixel art.",
+    "Conservar esta paleta al cambiar poses o estados; no derivar los colores del tema de interfaz.",
+    "Los colores de objetos como libros, copas y fuego se definen por separado.",
+    "La generacion por imagen debe verificarse visualmente y por muestreo; el prompt por si solo no garantiza coincidencia RGB exacta."
+  ]
+}

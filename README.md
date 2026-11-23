@@ -23,7 +23,7 @@ Para cada encuentro se elige **límite de preguntas** o **primero en alcanzar lo
 
 Si el límite de preguntas termina empatado, se continúa con preguntas extra hasta desempatar. El control mantiene una lista de equipos con victorias. Cuando se decide jugar la final, marcar **Es la final del torneo** y seleccionar dos equipos que hayan ganado al menos un encuentro. Confirmar el resultado de la final muestra al campeón y cierra el torneo.
 
-Las preguntas se consideran usadas desde que se muestran, incluso si ambos equipos fallan. No se repiten entre encuentros del mismo torneo; las preguntas reservadas pero nunca mostradas siguen disponibles. Al cerrar un enfrentamiento, gana el equipo con más puntos. Esto también aplica si se agota el banco antes de alcanzar la meta. El botón Cerrar enfrentamiento permite cerrar manualmente y después confirmar al ganador. Si hay empate y el banco se agota, el encuentro se pausa para incorporar preguntas de desempate. **Importar más preguntas para el torneo** permite incorporar preguntas con identificadores nuevos; después usar **Continuar con las preguntas añadidas**. Importar una actualización con un id ya existente no libera esa pregunta para reutilizarla.
+Las preguntas se consideran usadas desde que se muestran, incluso si ambos equipos fallan. No se repiten entre encuentros del mismo torneo; las preguntas reservadas pero nunca mostradas siguen disponibles. Al cerrar un enfrentamiento, gana el equipo con más puntos. Esto también aplica si se agota el banco antes de alcanzar la meta. El botón Cerrar enfrentamiento permite cerrar manualmente y después confirmar al ganador. Si hay empate y el banco se agota, el encuentro se pausa para incorporar preguntas de desempate. **Reemplazar banco de preguntas del torneo** sustituye el banco completo; después usar **Continuar con el nuevo banco**. El historial y los puntos se conservan. Importar una actualización con un id ya existente no libera esa pregunta para reutilizarla.
 
 El torneo y sus resultados son temporales en escritorio: cerrar la aplicación o confirmar **Salir del torneo** descarta el historial y el control de preguntas usadas. SQLite conserva el banco y el logo del sistema. En la prueba de navegador, el torneo usa el mismo almacenamiento local que las partidas.
 
@@ -48,7 +48,7 @@ En navegador, se usa almacenamiento local para comunicar las vistas; abrir solo 
 
 En escritorio, el banco se guarda en **SQLite**, en `preguntas.sqlite` dentro de la carpeta de datos de la aplicación (`%APPDATA%/com.maratonconocimiento.desktop/` en Windows). Las preguntas y las imágenes importadas quedan dentro de esa base y sobreviven al cierre de la aplicación. No se instala un servidor SQL.
 
-`src/questions.json` contiene las preguntas de ejemplo que se cargan solo al crear la base por primera vez. En navegador se usa ese banco de ejemplo. Cada pregunta tiene un `id` único, categoría, texto, 3 o 4 opciones, `answer` (índice desde cero) y explicación. Cada opción contiene `text` e `image`:
+`src/questions.json` contiene las preguntas de ejemplo que se cargan solo al crear la base por primera vez. En navegador se usa ese banco de ejemplo. Cada pregunta tiene un `id` único, categoría, texto, 3 o 4 opciones y `answer` (índice desde cero). Cada opción contiene `text` e `image`:
 
 ```json
 { "text": "Marte", "image": "/images/q1-1.svg" }
@@ -59,17 +59,17 @@ Las rutas `/images/` del banco de ejemplo corresponden a `public/images/`. Sus i
 ## Importar desde CSV
 
 1. En la configuración inicial, pulsar **Importar preguntas desde CSV**. Esta función está disponible en escritorio, antes de iniciar una partida.
-2. Descargar la plantilla del formulario o usar `public/plantilla-preguntas.csv` del proyecto. Las dos filas son ejemplos: proporcionar las imágenes que nombran o sustituirlas por las propias.
+2. Pulsar **Descargar plantilla CSV** en el formulario y elegir dónde guardarla, o usar `public/plantilla-preguntas.csv` del proyecto. Las tres filas son ejemplos solo de texto: sustituirlas por las preguntas propias. Se pueden añadir imágenes opcionalmente. **Cómo llenar la plantilla CSV** muestra las instrucciones y los límites dentro del sistema. Cancelar la descarga no modifica el banco de preguntas.
 3. Guardar el CSV con codificación **UTF-8**, separado por coma o punto y coma. Los textos que contengan el separador o saltos de línea deben ir entre comillas dobles; una comilla dentro de un campo se escribe dos veces.
 4. Seleccionar el CSV y sus imágenes individuales, o una carpeta de imágenes. En las columnas `imagen_a` a `imagen_d` escribir solo el nombre del archivo, por ejemplo `marte.jpg`, sin rutas. Los nombres no distinguen mayúsculas; no se permiten dos archivos seleccionados con el mismo nombre.
 5. Pulsar **Revisar importación**. Corregir los errores antes de continuar. Se puede expandir la vista previa para inspeccionar textos, imágenes y respuesta correcta.
-6. Confirmar con **Guardar…**. Se añaden los identificadores nuevos y se actualizan los existentes; el resto del banco se conserva. La importación se guarda en una sola transacción: si falla, no se aplica parcialmente.
+6. Confirmar con **Guardar…**. El CSV reemplaza el banco completo: las preguntas anteriores se eliminan y quedan únicamente las del archivo nuevo. La importación se guarda en una sola transacción: si falla, no se aplica parcialmente.
 
-Columnas: `id,categoria,pregunta,opcion_a,imagen_a,opcion_b,imagen_b,opcion_c,imagen_c,opcion_d,imagen_d,correcta,explicacion`.
+Columnas: `id,categoria,pregunta,opcion_a,imagen_a,opcion_b,imagen_b,opcion_c,imagen_c,opcion_d,imagen_d,correcta`.
 
-Las opciones A, B y C son obligatorias. D es opcional: dejar vacíos tanto su texto como su imagen. `correcta` debe contener A, B, C o D. Mantener un `id` estable para actualizar una pregunta; los ejemplos iniciales usan los ids `1` a `8`. La explicación puede quedar vacía.
+Las opciones A, B y C son obligatorias. D es opcional: dejar vacíos tanto su texto como su imagen. `correcta` debe contener A, B, C o D. Cada importación reemplaza el banco completo, incluso si coinciden identificadores; los ejemplos iniciales usan los ids `1` a `8`. La plantilla ya no incluye explicación. Las imágenes son opcionales: deja las columnas imagen vacías (o elimínalas) para preguntas solo de texto.
 
-Límites: 500 preguntas por CSV, CSV de hasta 2 MB, imagen original de hasta 20 MB y 80 millones de píxeles, lote procesado de hasta 64 MB. Textos: id de hasta 80 caracteres, categoría de 60, pregunta de 180, opción de 80 y explicación de 300. Se recomiendan textos cortos para proyección a 800×600.
+Límites: 500 preguntas por CSV, CSV de hasta 2 MB, imagen original de hasta 20 MB y 80 millones de píxeles, lote procesado de hasta 64 MB. Textos: id de hasta 80 caracteres, categoría de 60, pregunta de 1200 y opción de 400. Se recomiendan textos cortos para proyección a 800×600.
 
 El banco guardado se copia al comenzar cada partida. Las preguntas de una partida y su marcador no se guardan permanentemente todavía. La importación por ZIP y el editor de preguntas quedan para una etapa posterior.
 
@@ -116,3 +116,19 @@ En la pantalla inicial, **Configurar logo del sistema** permite elegir un PNG, J
 La distribución se ajusta automáticamente al espacio disponible: 800×600 y 1024×768 (4:3), 1024×720, 1920×1080 (16:9) y ultrawide. Las imágenes conservan sus proporciones. En pantallas de relación 2:1 o mayor las opciones se distribuyen en una fila; en las demás se usa una cuadrícula de dos columnas.
 
 En la ventana de participantes, **F11** alterna pantalla completa y **Escape** sale de ella. Para aprovechar una resolución de proyector de 800×600 completa, usar pantalla completa: los bordes y la barra de título de una ventana ocupan parte de esos píxeles. Esta función adapta el contenido y no cambia la resolución configurada en Windows. `src/participants.css` mantiene estos ajustes separados de la vista del conductor.
+
+### Preguntas solo de texto
+
+Las respuestas sin imagen se muestran en tarjetas con letras A–D. Las preguntas largas usan texto más compacto y respuestas en una columna en la pantalla de participantes; si el contenido excede la pantalla se puede desplazar para leerlo completo. No se recorta el texto. La explicación ya no se solicita ni se muestra. Se admiten hasta 1200 caracteres por pregunta y 400 por respuesta. Las imágenes siguen siendo opcionales para bancos mixtos.
+
+### Sustitución del banco
+
+Al importar un CSV, la revisión indica cuántas preguntas tiene el banco actual y cuántas tendrá el nuevo. Solo al pulsar **Reemplazar banco** se elimina el anterior y se guarda el nuevo, en una única transacción. Un archivo inválido o un fallo de guardado conserva el banco anterior completo. Los bancos no se combinan ni se archivan. El logo y el tema se conservan. En torneo se puede cambiar el banco entre encuentros o durante un desempate pausado; se conservan los puntos, el historial y los identificadores ya usados para evitar repeticiones.
+
+### Rondas con control externo de los enfrentamientos
+
+**Iniciar rondas con varios equipos** registra los equipos disponibles. Antes de cada ronda se eligen libremente dos equipos y la cantidad de preguntas (4 por defecto). La ronda termina al alcanzar esa cantidad incluso en empate, sin desempates automáticos. **Confirmar resultado y elegir equipos** habilita el siguiente enfrentamiento. Cualquier equipo puede volver a participar y no se exige haber ganado antes. Los pases directos, eliminatorias y la decisión de la final se controlan fuera de la aplicación. El sistema conserva únicamente los resultados y las preguntas usadas durante esa sesión. Las preguntas que nunca se mostraron siguen disponibles; salir de la sesión reinicia ese control.
+
+### Mantener la cantidad entre partidos
+
+La cantidad de preguntas se elige en el primer enfrentamiento y se conserva durante toda la sesión. Tras confirmar un resultado, **Siguiente partido** permite elegir otros dos equipos, manteniendo esa cantidad y excluyendo las preguntas ya mostradas. Si no quedan suficientes preguntas para un partido completo, el botón se desactiva. **Volver al inicio** reinicia los resultados y el control de preguntas usadas: el banco cargado se conserva y todas sus preguntas vuelven a estar disponibles al iniciar otra sesión.

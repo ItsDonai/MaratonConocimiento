@@ -11,3 +11,5 @@ header{position:sticky;top:0;z-index:10;background:#f4f3eb}.encounter-logo{width
 .system-logo-preview{display:block;width:min(100%,320px);height:160px;object-fit:contain;margin:0 0 24px;border:1px solid #dbe1d2;border-radius:10px;padding:12px}
 .tournament-team-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto;align-items:center;gap:12px;border-bottom:1px solid #dbe1d2;padding:12px 0}.tournament-history{margin-top:18px}.tournament-history li{margin:10px 0}.tournament-history summary{cursor:pointer}input[type=checkbox]{width:22px;height:22px}@media(max-width:650px){.tournament-team-row{grid-template-columns:1fr}}
 .team-name{font-weight:700}.primary .team-name{display:inline-block;background:#fffefa;color:#183d36;padding:2px 6px;border-radius:5px}
+
+.template-download{display:inline-block;text-decoration:none;font-weight:650}.template-download[aria-disabled=true]{opacity:.6;cursor:wait}

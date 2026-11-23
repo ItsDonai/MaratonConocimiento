@@ -6,6 +6,7 @@ use std::{collections::HashSet, path::Path};
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct OptionItem {
     pub text: String,
+    #[serde(default)]
     pub image: String,
 }
 
@@ -16,6 +17,7 @@ pub struct Question {
     pub text: String,
     pub options: Vec<OptionItem>,
     pub answer: usize,
+    #[serde(default)]
     pub explanation: String,
 }
 
@@ -121,12 +123,13 @@ pub fn validate(questions: &[Question]) -> Result<(), String> {
     let mut total = 0usize;
     for q in questions {
         let bounded = |s: &str, max: usize| !s.trim().is_empty() && s.chars().count() <= max;
-        if !bounded(&q.id, 80) || !ids.insert(&q.id) || !bounded(&q.category, 60) || !bounded(&q.text, 180)
+        if !bounded(&q.id, 80) || !ids.insert(&q.id) || !bounded(&q.category, 60) || !bounded(&q.text, 1200)
             || q.explanation.chars().count() > 300 || !(3..=4).contains(&q.options.len()) || q.answer >= q.options.len() {
             return Err(format!("Pregunta «{}»: identificador, texto, opciones o respuesta inválidos.", q.id));
         }
         for option in &q.options {
-            if !bounded(&option.text, 80) { return Err(format!("Pregunta «{}»: texto de opción inválido.", q.id)); }
+            if !bounded(&option.text, 400) { return Err(format!("Pregunta «{}»: texto de opción inválido.", q.id)); }
+            if option.image.is_empty() { continue; }
             let (prefix, encoded) = option.image.split_once(',').ok_or("Imagen inválida")?;
             if !["data:image/png;base64", "data:image/jpeg;base64", "data:image/webp;base64"].contains(&prefix)
                 || encoded.len() > 2_800_000 { return Err("Usa imágenes PNG, JPG o WebP de hasta 2 MB procesados.".into()); }
@@ -138,7 +141,7 @@ pub fn validate(questions: &[Question]) -> Result<(), String> {
             };
             if !valid { return Err("El contenido de una imagen no coincide con su formato.".into()); }
             total += option.image.len();
-            if total > 64 * 1024 * 1024 { return Err("El lote supera 64 MB. Divídelo en varios archivos CSV.".into()); }
+            if total > 64 * 1024 * 1024 { return Err("El lote supera 64 MB. Reduce la cantidad de preguntas o el tamaño de sus imágenes.".into()); }
         }
     }
     Ok(())
@@ -147,6 +150,7 @@ pub fn validate(questions: &[Question]) -> Result<(), String> {
 pub fn import(db: &mut Connection, questions: &[Question]) -> Result<(), String> {
     validate(questions)?;
     let tx = db.transaction().map_err(|e| e.to_string())?;
+    tx.execute("DELETE FROM questions", []).map_err(|e| e.to_string())?;
     write_questions(&tx, questions)?;
     tx.commit().map_err(|e| e.to_string())
 }
@@ -159,19 +163,37 @@ mod tests {
             options:(0..3).map(|i| OptionItem { text:format!("Opción {i}"), image:"data:image/png;base64,iVBORw0KGgo=".into() }).collect() }
     }
     #[test]
-    fn insert_update_and_reject_without_partial_writes() {
+    fn text_only_long_questions_persist() {
+        let mut db = Connection::open_in_memory().unwrap();
+        initialize(&mut db).unwrap();
+        let mut q = sample("solo-texto");
+        q.text = "Pregunta extensa. ".repeat(40);
+        for option in &mut q.options { option.image.clear(); option.text = "Respuesta extensa. ".repeat(10); }
+        q.explanation.clear();
+        import(&mut db, &[q.clone()]).unwrap();
+        assert_eq!(load(&db).unwrap().last(), Some(&q));
+        q.text = "x".repeat(1201);
+        assert!(import(&mut db, &[q]).is_err());
+    }
+    #[test]
+    fn replace_bank_and_reject_without_partial_writes() {
         let mut db=Connection::open_in_memory().unwrap(); initialize(&mut db).unwrap();
-        let original=load(&db).unwrap();
         let q=sample("nueva"); import(&mut db, &[q.clone()]).unwrap();
-        assert_eq!(load(&db).unwrap().len(),original.len()+1);
+        assert_eq!(load(&db).unwrap().len(),1);
         let mut changed=q.clone(); changed.text="Pregunta actualizada".into(); changed.options.pop();
         assert!(import(&mut db, &[sample("no_guardar"),changed.clone()]).is_err());
         assert_eq!(load(&db).unwrap().last(),Some(&q));
         changed.options.push(q.options[2].clone());
         import(&mut db,&[changed.clone()]).unwrap();
         assert_eq!(load(&db).unwrap().last(),Some(&changed));
-        assert_eq!(load(&db).unwrap().len(),original.len()+1);
+        assert_eq!(load(&db).unwrap().len(),1);
         assert!(import(&mut db,&[q.clone(),q]).is_err());
+        let replacement=sample("otro-banco");
+        import(&mut db,&[replacement.clone()]).unwrap();
+        assert_eq!(load(&db).unwrap(),vec![replacement]);
+        assert_eq!(db.query_row("SELECT COUNT(*) FROM options", [], |r| r.get::<_, i64>(0)).unwrap(),3);
+        assert!(import(&mut db,&[]).is_err());
+        assert_eq!(load(&db).unwrap().len(),1);
     }
     #[test]
     fn disk_persists_images_after_reopening() {

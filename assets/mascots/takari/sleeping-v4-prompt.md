@@ -1,0 +1,9 @@
+# Takari dormido · referencia de color y contornos
+
+Edición con la herramienta integrada de imágenes. Imagen 1: pose `takari-sleeping-v3.png`. Imagen 2: referencia cromática original `logos/takari/takari.png`.
+
+## Prompt utilizado
+
+COLOR-CORRECTION EDIT ONLY. Image 1 is the Takari sleeping pixel art to edit; preserve its exact seated cross-legged pose, fuller face and neck, stocky body, sleepy closed eyes, hands on lap, horns, wings, tail, clothing emblem, framing and transparency. Image 2 is ONLY the original mascot COLOR AUTHORITY. Remove ALL reddish/brown/maroon/purple pixels and fringes from every outline. All outlines and interior separating lines must be solid opaque PURE BLACK RGB(0,0,0) #000000. No dark red outlines, no tinted antialiasing or semitransparent red halo. Use hard pixel edges with binary alpha for the outer silhouette; transparent outside, solid black on the contour. Match these exact flat-color reference swatches sampled from Image 2: golden ochre skin base #DDA814, skin shadow #DF9909, skin highlight #DDAB16; pale yellow belly and wing membranes base #F0DB5E, shadow #EDD454, highlight #F4E36B; teal polo base #007B6F, shadow #003738, highlight #007C70; gray horns base #969696, shadow #909090, highlight #AAAAAA; white collar, emblem and claws #FFFFFF; outlines, closed eyes and separators #000000. Restrict the mascot to these 14 RGB swatches and transparency. No gradients, texture, dithering, glow, antialiasing, colored fringe or new colors. Keep all forms identical to Image 1, recolor only. The gold should feel like the original ochre university dragon rather than bright neon yellow. Single full-body sprite only, transparent background with genuine alpha, no Z letters, no text, no additional objects, no backdrop.
+
+La imagen generada es la fuente. Para mantener los RGB exactos en la aplicación, el render de espera usa `palette.json` y `src/takari-palette.js`.

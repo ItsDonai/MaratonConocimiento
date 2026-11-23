@@ -1,12 +1,23 @@
 import { getTeamLogo } from './team-logos.js';
 
+export function usedQuestionIds(previous, game) {
+  const shown = game && game.kind !== 'tournament'
+    ? game.questions.slice(0, game.position + 1).map(q => q.id) : [];
+  return [...new Set([...previous, ...shown].map(String))];
+}
+
+export function unusedQuestions(bank, usedIds) {
+  const used = new Set(usedIds.map(String));
+  return bank.filter(q => !used.has(String(q.id)));
+}
+
 export function validateBank(bank) {
   if (!Array.isArray(bank) || !bank.length) throw new Error('El banco está vacío.');
   const ids = new Set();
   for (const q of bank) {
     if (ids.has(q.id) || !q.text || !Array.isArray(q.options) || q.options.length < 3 || q.options.length > 4 ||
         !Number.isInteger(q.answer) || q.answer < 0 || q.answer >= q.options.length ||
-        q.options.some(o => !o.text || !o.image)) throw new Error('Revisa los identificadores, opciones e imágenes del banco.');
+        q.options.some(o => !o.text || (o.image != null && typeof o.image !== 'string'))) throw new Error('Revisa los identificadores y opciones del banco.');
     ids.add(q.id);
   }
 }
@@ -80,7 +91,7 @@ export function publicState(state) {
     resolved: state.resolved, revealed: state.revealed, feedback: state.feedback,
     question: q ? {
       id: q.id, text: q.text, category: q.category, options: q.options,
-      ...(state.resolved ? { answer: q.answer, explanation: q.explanation } : {}),
+      ...(state.resolved ? { answer: q.answer } : {}),
     } : null,
   };
 }

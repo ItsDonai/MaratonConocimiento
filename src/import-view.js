@@ -1,4 +1,5 @@
-import { parseQuestionCsv, matchImages, summarizeImport } from './importer.js';
+import { parseQuestionCsv, matchImages } from './importer.js';
+import { invoke, isTauri } from '@tauri-apps/api/core';
 
 function el(tag, text) {
   const node = document.createElement(tag);
@@ -27,13 +28,42 @@ async function prepareImage(file) {
 export function mountImporter(main, { current, save, back }) {
   main.append(el('h1', 'Importar preguntas'));
   const panel = el('section'); panel.className = 'card import-panel';
-  const template = el('a', 'Descargar plantilla CSV'); template.href = '/plantilla-preguntas.csv'; template.download = 'plantilla-preguntas.csv';
-  panel.append(template, el('p', 'Selecciona el CSV y sus imágenes. Los nombres del CSV deben coincidir con los archivos. Se admiten PNG, JPG y WebP.'));
-  panel.append(el('p', 'Los identificadores nuevos se añaden; los existentes se actualizan. Las preguntas que no estén en el CSV se conservan.'));
+  const template = el('a', 'Descargar plantilla CSV'); template.href = `${import.meta.env.BASE_URL}plantilla-preguntas.csv`; template.download = 'plantilla-preguntas.csv';
+  template.className = 'choice template-download';
+  const downloadStatus = el('p'); downloadStatus.setAttribute('role', 'status');
+  let downloading = false;
+  template.onclick = async event => {
+    if (!isTauri()) return;
+    event.preventDefault();
+    if (downloading) return;
+    downloading = true; template.setAttribute('aria-disabled', 'true');
+    downloadStatus.textContent = '';
+    try {
+      const saved = await invoke('save_question_template');
+      downloadStatus.textContent = saved ? 'Plantilla guardada. Sustituye las preguntas de ejemplo por las tuyas.' : 'Descarga cancelada.';
+    } catch (error) { downloadStatus.textContent = `No se pudo descargar la plantilla: ${String(error.message || error)}`; }
+    finally { downloading = false; template.removeAttribute('aria-disabled'); }
+  };
+  const guide = el('details');
+  guide.append(el('summary', 'Cómo llenar la plantilla CSV'));
+  const tips = el('ul');
+  [
+    'La plantilla contiene tres preguntas de ejemplo solo de texto, con tres y cuatro opciones. Sustitúyelas antes de importar. Las imágenes son opcionales.',
+    'Conserva los encabezados y escribe una pregunta por fila. Usa un id único dentro del archivo. Cada importación reemplaza el banco completo.',
+    'Completa categoria, pregunta y las opciones A, B y C y añade imágenes solo si las necesitas. Para usar solo tres opciones, deja opcion_d e imagen_d vacías.',
+    'En imagen_a, imagen_b, imagen_c e imagen_d escribe el nombre completo del archivo, por ejemplo jupiter.jpg, sin carpetas. Selecciona esos archivos al importar.',
+    'En correcta escribe A, B, C o D.',
+    'Guarda como CSV UTF-8 desde Excel o LibreOffice para conservar acentos y eñes. Se admite coma o punto y coma como separador.',
+    'Máximo 500 preguntas por archivo. Límites de texto: id 80, categoría 60, pregunta 1200, cada opción 400 caracteres.'
+  ].forEach(text => tips.append(el('li', text)));
+  guide.append(tips);
+  panel.append(template, downloadStatus, guide);
+  panel.append(el('p', 'Selecciona el CSV y, si las hay, sus imágenes. Los nombres del CSV deben coincidir con los archivos. Se admiten PNG, JPG y WebP.'));
+  panel.append(el('p', 'Al confirmar, este CSV reemplazará todo el banco anterior. Las preguntas anteriores que no estén en el archivo se eliminarán. Revisar el archivo no modifica el banco.'));
   const csv = el('input'); csv.type = 'file'; csv.accept = '.csv,text/csv';
   const images = el('input'); images.type = 'file'; images.multiple = true; images.accept = '.png,.jpg,.jpeg,.webp';
   const folder = el('input'); folder.type = 'file'; folder.multiple = true; folder.setAttribute('webkitdirectory', '');
-  for (const [label, input] of [['Archivo CSV (UTF-8)', csv], ['Imágenes: seleccionar archivos', images], ['O seleccionar una carpeta de imágenes', folder]]) {
+  for (const [label, input] of [['Archivo CSV (UTF-8)', csv], ['Imágenes opcionales: seleccionar archivos', images], ['O seleccionar una carpeta de imágenes', folder]]) {
     const field = el('label'); field.className = 'field'; field.append(el('span', label), input); panel.append(field);
   }
   panel.append(el('p', 'Cada imagen se adapta a un máximo de 1024 píxeles para la proyección. Hasta 500 preguntas y 64 MB procesados por lote. Usa textos breves para los proyectores pequeños.'));
@@ -73,6 +103,7 @@ export function mountImporter(main, { current, save, back }) {
       for (const question of parsed.questions) {
         const options = [];
         for (const option of question.options) {
+          if (!option.image) { options.push({ text: option.text, image: '' }); continue; }
           const name = option.image.toLowerCase();
           if (!cache.has(name)) {
             try { cache.set(name, await prepareImage(matched.files.get(name))); }
@@ -84,11 +115,10 @@ export function mountImporter(main, { current, save, back }) {
         }
         const { record: _record, ...data } = question;
         prepared.push({ ...data, options });
-        if (size > 64 * 1024 * 1024) throw new Error('El lote supera 64 MB procesados. Divídelo en varios archivos CSV.');
+        if (size > 64 * 1024 * 1024) throw new Error('El lote supera 64 MB procesados. Reduce la cantidad de preguntas o el tamaño de sus imágenes.');
       }
       if (errors.length) { showErrors(errors); return; }
-      const summary = summarizeImport(prepared, current);
-      result.replaceChildren(el('h2', 'Revisión lista'), el('p', `${prepared.length} preguntas válidas: ${summary.added} nuevas y ${summary.updated} actualizaciones. No se eliminarán otras preguntas.`));
+      result.replaceChildren(el('h2', 'Revisión lista'), el('p', `El banco actual de ${current.length} preguntas se reemplazará por las ${prepared.length} preguntas de este archivo. No se combinarán los bancos.`));
       const preview = el('details'); preview.append(el('summary', 'Ver preguntas antes de guardar'));
       for (const question of prepared) {
         const item = el('details');
@@ -96,11 +126,12 @@ export function mountImporter(main, { current, save, back }) {
         const options = el('div'); options.className = 'import-options';
         question.options.forEach((option, i) => {
           const figure = el('figure'); const image = el('img'); image.src = option.image; image.alt = option.text; image.loading = 'lazy';
-          figure.append(image, el('figcaption', `${String.fromCharCode(65 + i)}. ${option.text}${question.answer === i ? ' · Correcta' : ''}`)); options.append(figure);
+          if (option.image) figure.append(image);
+          figure.append(el('figcaption', `${String.fromCharCode(65 + i)}. ${option.text}${question.answer === i ? ' · Correcta' : ''}`)); options.append(figure);
         });
-        item.append(options, el('p', question.explanation)); preview.append(item);
+        item.append(options); preview.append(item);
       }
-      const commit = el('button', `Guardar ${summary.added} nuevas y ${summary.updated} actualizaciones`); commit.className = 'primary';
+      const commit = el('button', `Reemplazar banco de ${current.length} por ${prepared.length} preguntas`); commit.className = 'primary';
       commit.onclick = async () => {
         if (pending || version !== reviewedVersion) return;
         lock(true); commit.disabled = true;

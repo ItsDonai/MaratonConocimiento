@@ -2,17 +2,19 @@ import './style.css';
 import './participants.css';
 import './conductor.css';
 import './themes.css';
+import './text-questions.css';
 import './celebrations.css';
 import bank from './questions.json';
 import { invoke, isTauri } from '@tauri-apps/api/core';
-import { act, startGame, publicState, validateBank } from './game.js';
+import { act, startGame, publicState, validateBank, usedQuestionIds, unusedQuestions } from './game.js';
 import { mountImporter } from './import-view.js';
 import { teamLogos, getTeamLogo, applyTeamColor, teamNameElement } from './team-logos.js';
 import { mountLogoSettings } from './system-logo.js';
-import { startTournament, tournamentAct, publicTournament, extendTournamentBank } from './tournament.js';
+import { startTournament, tournamentAct, publicTournament, replaceTournamentBank } from './tournament.js';
 import { mountTournamentSetup, renderTournament } from './tournament-view.js';
 import { applyTheme, normalizeTheme, mountThemeSettings } from './themes.js';
 import { updateCelebrations, winnerTrophy, animationPresets, playCelebration, stopCelebrations } from './celebrations.js';
+import { takariVictory, takariSleeping, takariWaiting } from './takari.js';
 
 const encounterLogo = new URL('../logos/LOGO ENCUENTRO.png', import.meta.url).href;
 let systemLogo = encounterLogo;
@@ -41,6 +43,8 @@ const audience = new URLSearchParams(location.search).get('view') === 'participa
 document.body.classList.add(audience ? 'participants' : 'conductor');
 const app = document.querySelector('#app');
 const key = 'maraton-session-v2';
+const usedKey = 'maraton-used-questions-v1';
+let usedIds = [];
 let state = null;
 let busy = false;
 let message = '';
@@ -81,8 +85,11 @@ async function readState() {
   return audience ? displayState(value) : value;
 }
 async function writeState(next) {
+  const nextUsedIds = usedQuestionIds(usedQuestionIds(usedIds, state), next);
+  if (!audience) localStorage.setItem(usedKey, JSON.stringify(nextUsedIds));
   if (isTauri()) await invoke('set_game_state', { snapshot: next, display: displayState(next) });
   else localStorage.setItem(key, JSON.stringify(next));
+  usedIds = nextUsedIds;
   state = next;
 }
 async function change(action) {
@@ -103,15 +110,24 @@ function labeled(label, input) {
   const node = el('label', undefined, 'field'); node.append(el('span', label), input); return node;
 }
 function setup(main) {
+  const remaining = unusedQuestions(availableBank, usedIds);
   const actions = el('nav', undefined, 'home-actions');
   actions.setAttribute('aria-label', 'Acciones de inicio');
   actions.append(button('Abrir pantalla de participantes', openAudience));
-  actions.append(button('Crear torneo de varios equipos', () => { configuringTournament = true; render(); }));
+  actions.append(button('Iniciar rondas con varios equipos', () => { configuringTournament = true; render(); }));
   actions.append(button('Configurar logo del sistema', () => { configuringLogo = true; render(); }));
   actions.append(button('Configurar tema', () => { configuringTheme = true; render(); }));
   if (isTauri()) actions.append(button('Importar preguntas desde CSV', () => { importing = true; render(); }));
   main.append(actions);
-  main.append(el('p', `Banco disponible: ${availableBank.length} preguntas.`, 'muted'));
+  main.append(el('p', `Banco disponible: ${remaining.length} preguntas.`, 'muted'));
+  if (usedIds.length) main.append(button('Reiniciar preguntas disponibles', () => {
+    if (!window.confirm('¿Reiniciar el banco? Las preguntas usadas volverán a estar disponibles.')) return;
+    localStorage.removeItem(usedKey); usedIds = []; render();
+  }));
+  if (!remaining.length) {
+    main.append(el('p', 'No quedan preguntas nuevas para otra partida. Reinicia el banco o importa preguntas.'));
+    return;
+  }
   if (!isTauri()) main.append(el('p', 'La importación con SQLite está disponible en la aplicación de escritorio.', 'muted'));
   main.append(el('h1', 'Configurar partida', 'question'));
   const form = el('form', undefined, 'card');
@@ -138,9 +154,9 @@ function setup(main) {
   for (const [value, label] of [['limited', 'Número de preguntas'], ['free', 'Ronda libre: todo el banco']]) {
     const option = el('option', label); option.value = value; mode.append(option);
   }
-  const count = el('input'); count.type = 'number'; count.min = '1'; count.max = String(availableBank.length); count.value = String(availableBank.length); count.required = true;
+  const count = el('input'); count.type = 'number'; count.min = '1'; count.max = String(remaining.length); count.value = String(remaining.length); count.required = true;
   mode.addEventListener('change', () => { count.disabled = mode.value === 'free'; });
-  form.append(labeled('Modalidad', mode), labeled(`Cantidad (1 a ${availableBank.length})`, count));
+  form.append(labeled('Modalidad', mode), labeled(`Cantidad (1 a ${remaining.length})`, count));
   form.append(el('p', 'En cada pregunta debes elegir qué equipo comienza. Las preguntas no se repiten durante la partida.', 'muted'));
   const submit = el('button', 'Iniciar partida', 'primary'); submit.type = 'submit'; submit.disabled = busy;
   form.append(submit);
@@ -148,7 +164,7 @@ function setup(main) {
     event.preventDefault(); if (busy) return;
     busy = true; submit.disabled = true;
     try {
-      const questions = isTauri() ? await invoke('get_questions') : availableBank;
+      const questions = unusedQuestions(isTauri() ? await invoke('get_questions') : availableBank, usedIds);
       await writeState(startGame(questions, names.map(n => n.value), mode.value, Number(count.value), undefined, logos.map(logo => logo.value)));
       message = '';
     } catch (error) { message = String(error.message || error); }
@@ -196,9 +212,16 @@ function question(main, game) {
     const wrong = game.attempts.some(a => a.option === i && !a.correct);
     const correct = game.resolved && q.answer === i;
     const node = audience ? el('div', undefined, 'choice') : button('', () => change({ type: 'answer', option: i }), game.activeTeam === null || game.resolved || game.attempts.length >= 2 || wrong, 'choice');
-    const image = el('img'); image.src = option.image; image.alt = option.text;
-    image.addEventListener('error', () => { image.hidden = true; });
-    node.append(image, el('span', `${String.fromCharCode(65 + i)}. ${option.text}${wrong ? ' · Incorrecta ✕' : ''}${correct ? ' · Correcta ✓' : ''}`));
+    node.classList.toggle('text-only', !option.image);
+    if (option.image) {
+      const image = el('img'); image.src = option.image; image.alt = option.text;
+      image.addEventListener('error', () => { image.remove(); node.classList.add('text-only'); });
+      node.append(image);
+    }
+    const label = el('span', undefined, 'option-label');
+    label.append(el('span', String.fromCharCode(65 + i), 'option-letter'), el('span', option.text, 'option-text'));
+    if (wrong || correct) label.append(el('span', wrong ? 'Incorrecta ✗' : 'Correcta ✓', 'option-result'));
+    node.append(label);
     if (wrong) node.classList.add('incorrect');
     if (correct) node.classList.add('correct');
     options.append(node);
@@ -219,7 +242,6 @@ function question(main, game) {
     else text.append('Responde ', teamNameElement(game.teams[game.activeTeam]), '.');
     feedback.append(text);
   }
-  if (game.resolved) feedback.append(el('p', q.explanation));
   card.append(feedback); main.append(card);
   if (!audience) {
     const controls = el('section', undefined, 'card');
@@ -230,8 +252,8 @@ function question(main, game) {
     controls.append(button('Revelar respuesta correcta', () => change({ type: 'reveal' }), game.resolved || game.attempts.length !== 2));
     controls.append(button(meta ? 'Cerrar pregunta y continuar' : game.position + 1 === game.total ? 'Finalizar y ver resultado' : 'Siguiente pregunta', () => change({ type: 'next' }), !game.resolved && game.attempts.length !== 2));
     if (meta) {
-      controls.append(button('Cerrar enfrentamiento', () => change({ type: 'close_match' }), game.teams[0].score === game.teams[1].score));
-      controls.append(el('p', 'Al cerrar el enfrentamiento gana quien tenga más puntos. Si hay empate, continúa el desempate.', 'muted'));
+      controls.append(button('Cerrar enfrentamiento', () => change({ type: 'close_match' }), !meta.manualRounds && game.teams[0].score === game.teams[1].score));
+      controls.append(el('p', meta.manualRounds ? 'La ronda termina al llegar al límite, incluso en empate. Los siguientes equipos se eligen manualmente.' : 'Al cerrar el enfrentamiento gana quien tenga más puntos. Si hay empate, continúa el desempate.', 'muted'));
     }
     controls.append(el('p', 'Puedes avanzar después de un acierto o de dos errores. Revelar es opcional. El avance siempre es manual.', 'muted'));
     main.append(controls);
@@ -249,10 +271,14 @@ function renderScreen() {
     const preview = el('div', undefined, 'animation-preview');
     const status = el('p', 'Selecciona una animación.'); status.setAttribute('role', 'status');
     const trophy = winnerTrophy(); trophy.hidden = true;
+    const takari = takariVictory(); takari.hidden = true;
+    const sleeping = takariSleeping(false); sleeping.hidden = true;
     const answer = el('div', '✓ ¡Respuesta correcta!', 'choice correct'); answer.hidden = true;
-    preview.append(trophy, answer, status); panel.append(preview);
+    preview.append(trophy, takari, sleeping, answer, status); panel.append(preview);
     animationPresets.forEach(preset => panel.append(button(preset.name, () => {
-      trophy.hidden = preset.id !== 'winner'; answer.hidden = preset.id !== 'correct';
+      trophy.hidden = preset.id !== 'winner'; takari.hidden = preset.id !== 'takari'; sleeping.hidden = preset.id !== 'takari-sleeping'; answer.hidden = ['winner', 'takari', 'takari-sleeping'].includes(preset.id);
+      answer.className = `choice ${preset.id === 'incorrect' ? 'incorrect' : 'correct'}`;
+      answer.textContent = preset.id === 'incorrect' ? '✕ Respuesta incorrecta. Turno del otro equipo.' : '✓ ¡Respuesta correcta!';
       status.textContent = matchMedia('(prefers-reduced-motion: reduce)').matches
         ? 'Movimiento reducido activo: se muestra el resultado sin partículas.' : `Probando: ${preset.name}.`;
       playCelebration(preset.id, preview);
@@ -305,13 +331,12 @@ function renderScreen() {
       current: availableBank,
       back: () => { importing = false; message = ''; render(); },
       save: async questions => {
+        const tournament = state?.kind === 'tournament' ? replaceTournamentBank(state, questions) : null;
         await invoke('import_questions', { questions });
-        const updated = new Map(availableBank.map(q => [String(q.id), q]));
-        questions.forEach(q => updated.set(String(q.id), q));
-        availableBank = [...updated.values()];
-        if (state?.kind === 'tournament') await writeState(extendTournamentBank(state, availableBank));
+        availableBank = structuredClone(questions);
+        if (tournament) await writeState(tournament);
         importing = false;
-        message = `Importación guardada. Banco disponible: ${availableBank.length} preguntas.`;
+        message = `Banco reemplazado. Preguntas disponibles: ${availableBank.length} preguntas.`;
         render();
       },
     });
@@ -319,7 +344,7 @@ function renderScreen() {
   }
   if (!audience && state) main.append(button('Abrir pantalla de participantes', openAudience));
   if (!state) {
-    if (audience) main.append(el('h1', 'Esperando la partida…', 'question'));
+    if (audience) { main.classList.add('waiting-screen'); main.append(takariWaiting()); }
     else setup(main);
     return;
   }
@@ -331,8 +356,8 @@ function renderScreen() {
         importing = true; render();
       },
     });
-    if (!audience) main.append(button('Salir del torneo', async () => {
-      if (!window.confirm('¿Salir del torneo? Se borrarán sus resultados temporales y el control de preguntas usadas.')) return;
+    if (!audience) main.append(button(state.manualRounds ? 'Volver al inicio' : 'Salir del torneo', async () => {
+      if (!window.confirm(state.manualRounds ? '¿Volver al inicio? Se reiniciarán los resultados y todas las preguntas del banco volverán a estar disponibles.' : '¿Salir del torneo? Se borrarán sus resultados temporales y el control de preguntas usadas.')) return;
       busy = true;
       try { await writeState(null); message = ''; }
       catch (error) { message = String(error); }
@@ -369,7 +394,13 @@ async function boot() {
     await refreshSystemLogo();
     if (!audience && isTauri()) availableBank = await invoke('get_questions');
     validateBank(availableBank);
-    state = await readState(); render();
+    if (!audience) usedIds = JSON.parse(localStorage.getItem(usedKey) || '[]');
+    state = await readState();
+    if (!audience) {
+      usedIds = usedQuestionIds(usedIds, state);
+      localStorage.setItem(usedKey, JSON.stringify(usedIds));
+    }
+    render();
     if (audience) {
       let lastLogoCheck = Date.now();
       // Recupera también la partida al reabrir la ventana pública.
