@@ -99,11 +99,17 @@ El diseño visual definitivo queda pendiente.
 
 ## Pantalla de participantes y proyectores
 
+### Sonidos
+
+El control del conductor reproduce tonos breves al pulsar botones, registrar una respuesta correcta o incorrecta y terminar una partida con ganador. En torneo, la victoria suena al confirmar al ganador, también en la final; los empates no reproducen victoria. La ventana de participantes no duplica el audio. Deshacer o revelar una respuesta no reproduce un acierto.
+
+El botón **Sonido: activado / silenciado** de la cabecera permite silenciar todos los tonos y conserva la preferencia en ese dispositivo. Los sonidos se generan localmente con Web Audio, sin archivos externos ni internet, y se habilitan al interactuar con el control. Un dispositivo sin audio no interrumpe la partida. La implementación está en `src/sounds.js`.
+
 ### Celebraciones
 
-Las respuestas correctas lanzan una ráfaga breve de confeti. Las victorias muestran una copa y fuegos artificiales de partículas; en torneo se activan después de confirmar al ganador, también para el campeón de la final. Un empate no activa una celebración de victoria. Los efectos funcionan en ambos temas, se detienen al cambiar de pregunta o pantalla y no se repiten con las actualizaciones del marcador. No bloquean los botones ni añaden sonido.
+Las respuestas correctas lanzan una ráfaga breve de confeti. Las victorias muestran a Takari con la copa y fuegos artificiales de partículas; en torneo se activan después de confirmar al ganador, también para el campeón de la final. Un empate no activa una celebración de victoria. Los efectos funcionan en ambos temas, se detienen al cambiar de pregunta o pantalla y no se repiten con las actualizaciones del marcador. No bloquean los botones; el audio se controla por separado desde la cabecera.
 
-Se utiliza `canvas-confetti`, incluido localmente en la aplicación, sin conexiones a servicios externos. La preferencia de movimiento reducido del sistema desactiva las partículas y las animaciones, manteniendo visible la copa y el resultado. El comportamiento está separado en `src/celebrations.js` y `src/celebrations.css`.
+Se utiliza `canvas-confetti`, incluido localmente en la aplicación, sin conexiones a servicios externos. La preferencia de movimiento reducido del sistema desactiva las partículas y las animaciones, manteniendo visibles a Takari con la copa y el resultado. El comportamiento está separado en `src/celebrations.js` y `src/celebrations.css`.
 
 ### Temas de apariencia
 
@@ -127,7 +133,7 @@ Al importar un CSV, la revisión indica cuántas preguntas tiene el banco actual
 
 ### Rondas con control externo de los enfrentamientos
 
-**Iniciar rondas con varios equipos** registra los equipos disponibles. Antes de cada ronda se eligen libremente dos equipos y la cantidad de preguntas (4 por defecto). La ronda termina al alcanzar esa cantidad incluso en empate, sin desempates automáticos. **Confirmar resultado y elegir equipos** habilita el siguiente enfrentamiento. Cualquier equipo puede volver a participar y no se exige haber ganado antes. Los pases directos, eliminatorias y la decisión de la final se controlan fuera de la aplicación. El sistema conserva únicamente los resultados y las preguntas usadas durante esa sesión. Las preguntas que nunca se mostraron siguen disponibles; salir de la sesión reinicia ese control.
+**Iniciar rondas con varios equipos** registra los equipos disponibles. Antes de cada ronda se eligen libremente dos equipos y la cantidad de preguntas (4 por defecto). La ronda termina al alcanzar esa cantidad incluso en empate, sin desempates automáticos. En empate, **Desempatar con otra pregunta** conserva los puntos y agrega una pregunta nueva: una partida de 8 pasa a la novena. Si ambos equipos fallan, al cerrar la pregunta vuelve a ofrecerse la opción; también puedes confirmar el empate. Está disponible antes y después de confirmar el resultado, mientras no pases al siguiente partido. Al desempatar un resultado confirmado, se actualiza el mismo encuentro sin duplicarlo en el historial. Las partidas normales también ofrecen el botón al finalizar empatadas. Cada pregunta adicional se descuenta del banco; si no quedan preguntas nuevas, el botón se desactiva. **Confirmar resultado** habilita el siguiente enfrentamiento. Cualquier equipo puede volver a participar y no se exige haber ganado antes. Los pases directos, eliminatorias y la decisión de la final se controlan fuera de la aplicación. El sistema conserva únicamente los resultados y las preguntas usadas durante esa sesión. Las preguntas que nunca se mostraron siguen disponibles; salir de la sesión reinicia ese control.
 
 ### Mantener la cantidad entre partidos
 

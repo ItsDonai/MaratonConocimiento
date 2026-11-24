@@ -39,6 +39,18 @@ export function startGame(bank, names, mode, count, random = Math.random, logos 
   };
 }
 
+export function breakTie(state, bank, usedIds = []) {
+  if (!state || state.phase !== 'finished' || state.teams[0].score !== state.teams[1].score) throw new Error('Solo puedes desempatar una partida terminada en empate.');
+  const fresh = unusedQuestions(bank, usedQuestionIds(usedIds, state));
+  if (!fresh.length) throw new Error('No quedan preguntas nuevas para desempatar.');
+  const next = structuredClone(state);
+  next.regularTotal ??= next.questions.length;
+  next.questions.push(startGame(fresh, [], 'limited', 1).questions[0]);
+  next.phase = 'playing';
+  next.activeTeam = null; next.attempts = []; next.resolved = false; next.revealed = false; next.feedback = null; next.history = [];
+  return next;
+}
+
 export function act(state, action) {
   if (!state || state.phase !== 'playing') throw new Error('No hay una pregunta activa.');
   const next = structuredClone(state);
@@ -87,7 +99,7 @@ export function publicState(state) {
   const q = state.questions[state.position];
   return {
     phase: state.phase, mode: state.mode, teams: state.teams, position: state.position,
-    total: state.questions.length, activeTeam: state.activeTeam, attempts: state.attempts,
+    total: state.questions.length, regularTotal: state.regularTotal, activeTeam: state.activeTeam, attempts: state.attempts,
     resolved: state.resolved, revealed: state.revealed, feedback: state.feedback,
     question: q ? {
       id: q.id, text: q.text, category: q.category, options: q.options,

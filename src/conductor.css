@@ -1,4 +1,26 @@
 /* Espaciado exclusivo del administrador; la proyección conserva su distribución. */
+/* El control ocupa toda la ventana incluso en pantallas de poco contenido. */
+body.conductor { min-height: 100vh; min-height: 100dvh; }
+.conductor #app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.conductor header {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  flex-wrap: wrap;
+}
+.conductor main {
+  flex: 1;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+}
 .conductor .home-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

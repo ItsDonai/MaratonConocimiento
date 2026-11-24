@@ -60,7 +60,7 @@ function matchForm(main, view, change, busy) {
   const limit = el('input'); limit.type = 'number'; limit.min = '1'; limit.max = String(view.remaining); limit.value = String(view.manualRounds && view.settings ? view.settings.limit : Math.min(4, view.remaining)); limit.required = true;
   limit.readOnly = !!(view.manualRounds && view.settings);
   form.append(field('Primer equipo', a), field('Segundo equipo', b), ...(view.manualRounds ? [] : [field('Es la final del torneo', final)]), field('Cómo termina este encuentro', mode), field('Límite del encuentro', limit));
-  form.append(el('p', view.manualRounds ? `${view.remaining} preguntas sin usar. La ronda termina al llegar al límite, incluso con empate. Después puedes elegir cualquier par de equipos; los pases se deciden fuera del sistema.` : `${view.remaining} preguntas sin usar. En empate se añaden preguntas hasta desempatar. La final solo puede enfrentar a equipos que ya hayan ganado.`, 'muted'));
+  form.append(el('p', view.manualRounds ? `${view.remaining} preguntas sin usar. Si la ronda termina en empate, puedes desempatar con preguntas adicionales o confirmar el empate. Después puedes elegir cualquier par de equipos; los pases se deciden fuera del sistema.` : `${view.remaining} preguntas sin usar. En empate se añaden preguntas hasta desempatar. La final solo puede enfrentar a equipos que ya hayan ganado.`, 'muted'));
   const winners = new Set(view.matches.map(m => m.winnerId));
   final.onchange = () => {
     for (const node of [a, b]) for (const option of node.options) option.disabled = final.checked && !winners.has(option.value);
@@ -81,6 +81,10 @@ function matchForm(main, view, change, busy) {
 
 export function renderTournament(main, view, { audience, scoreboard, question, change, importQuestions, busy }) {
   const nameNode = id => teamNameElement(view.roster.find(t => t.id === id) || { name: 'Equipo' });
+  const offerTiebreak = () => {
+    main.append(button('Desempatar con otra pregunta', () => change({ type: 'tiebreak' }), busy || !view.remaining));
+    main.append(el('p', view.remaining ? 'Se conserva el marcador. Si continúa el empate, podrás agregar otra pregunta.' : 'No quedan preguntas nuevas para desempatar.', 'muted'));
+  };
   if (view.phase === 'playing') {
     main.classList.add('playing');
     scoreboard(main, view.match);
@@ -98,6 +102,7 @@ export function renderTournament(main, view, { audience, scoreboard, question, c
         const result = el('p'); if (view.winnerId === null) result.append('La ronda terminó en empate.');
         else result.append('Ganador por puntuación: ', nameNode(view.winnerId));
         main.append(result, button(view.manualRounds ? 'Confirmar resultado' : 'Confirmar ganador', () => change({ type: 'confirm_winner' }), busy), button('Corregir antes de confirmar', () => change({ type: 'reopen' }), busy));
+        if (view.winnerId === null) offerTiebreak();
       }
     }
     if (['winner', 'champion'].includes(view.phase)) {
@@ -115,6 +120,7 @@ export function renderTournament(main, view, { audience, scoreboard, question, c
       main.append(result);
       }
       if (!audience && view.phase === 'winner' && !view.waiting) {
+        if (view.winnerId === null) offerTiebreak();
         if (view.manualRounds) {
           main.append(button('Siguiente partido', () => change({ type: 'next_match' }), busy || view.remaining < view.settings.limit));
           main.append(el('p', view.remaining < view.settings.limit ? `Quedan ${view.remaining} preguntas; no alcanzan para otro partido de ${view.settings.limit}. Vuelve al inicio para reiniciar el banco.` : `El siguiente partido usará ${view.settings.limit} preguntas de las ${view.remaining} restantes.`, 'muted'));

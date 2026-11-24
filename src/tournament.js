@@ -30,6 +30,24 @@ function scoresWinner(match) {
 export function tournamentAct(state, action) {
   if (state?.kind !== 'tournament') throw new Error('No hay un torneo activo.');
   const next = structuredClone(state);
+  if (action.type === 'tiebreak') {
+    if (!['review', 'winner'].includes(next.phase) || !next.match || scoresWinner(next.match) !== null) throw new Error('Solo puedes desempatar un encuentro terminado en empate.');
+    const fresh = remainingQuestions(next);
+    if (!fresh.length) throw new Error('No quedan preguntas nuevas para desempatar.');
+    if (next.phase === 'winner') next.matches.pop();
+    const shown = next.match.questions.slice(0, next.match.position + 1);
+    next.match.questions = [...shown, ...startGame(fresh, [], 'free', 0).questions];
+    // El resultado también puede cerrarse manualmente antes de agotar los intentos.
+    next.match.position++;
+    next.match.phase = 'playing';
+    next.match.activeTeam = null; next.match.attempts = []; next.match.resolved = false;
+    next.match.revealed = false; next.match.feedback = null; next.match.history = [];
+    next.usedIds.push(String(next.match.questions[next.match.position].id));
+    next.phase = 'playing'; next.winnerId = null; next.reason = null;
+    next.waiting = false; next.selectingNext = false;
+    next.tiebreak = true;
+    return next;
+  }
   if (action.type === 'next_match') {
     if (next.phase !== 'winner') throw new Error('Primero confirma el resultado del partido anterior.');
     if (remainingQuestions(next).length < next.settings.limit) throw new Error(`No quedan suficientes preguntas para otro partido de ${next.settings.limit}. Vuelve al inicio para reiniciar el banco.`);
@@ -64,6 +82,7 @@ export function tournamentAct(state, action) {
     next.settings = { manualRounds: !!next.manualRounds, teamIds: teams.map(t => t.id), mode: action.mode, limit: action.limit, final: !next.manualRounds && !!action.final };
     next.usedIds.push(String(next.match.questions[0].id));
     next.phase = 'playing'; next.winnerId = null; next.reason = null; next.waiting = false; next.selectingNext = false;
+    next.tiebreak = false;
     return next;
   }
   if (action.type === 'confirm_winner') {
@@ -97,9 +116,9 @@ export function tournamentAct(state, action) {
   if (!next.match.resolved && next.match.attempts.length !== 2) throw new Error('Primero termina los intentos de esta pregunta.');
   const winner = scoresWinner(next.match);
   const count = next.match.position + 1;
-  const reached = next.settings.mode === 'points'
+  const reached = next.tiebreak || (next.settings.mode === 'points'
     ? next.match.teams.some(t => t.score >= next.settings.limit)
-    : count >= next.settings.limit;
+    : count >= next.settings.limit);
   const exhausted = count === next.match.questions.length;
   if (next.manualRounds && (reached || exhausted)) {
     next.phase = 'review'; next.winnerId = winner === null ? null : next.settings.teamIds[winner];

@@ -1,0 +1,101 @@
+﻿id,categoria,pregunta,opcion_a,imagen_a,opcion_b,imagen_b,opcion_c,imagen_c,opcion_d,imagen_d,correcta
+maraton-001,Deportes,¿En qué ciudad se celebraron los primeros Juegos Olímpicos modernos en 1896?,Londres,,París,,Atenas,,Roma,,C
+maraton-002,Ciencias Básicas,¿Cuál es el símbolo químico del oro en la tabla periódica?,Fe,,Cu,,Au,,Ag,,C
+maraton-003,Entretenimiento,"¿Cómo se llama el reino donde transcurre la película ""Frozen"" de Disney?",Arendelle,,Agrabah,,Corona,,Atlántica,,A
+maraton-004,Arte y Literatura,"¿Quién pintó ""La noche estrellada""?",Salvador Dalí,,Pablo Picasso,,Vincent van Gogh,,Claude Monet,,C
+maraton-005,Geografía,¿Cuál es el río más caudaloso del mundo?,Río Misisipi,,Río Nilo,,Río Yangtsé,,Río Amazonas,,D
+maraton-006,Historia,¿En qué año llegó Cristóbal Colón a América?,1492,,1485,,1521,,1519,,A
+maraton-007,Deportes,¿Qué tenista masculino tiene el récord de más títulos de Roland Garros ganados?,Pete Sampras,,Roger Federer,,Novak Djokovic,,Rafael Nadal,,D
+maraton-008,Ciencias Básicas,¿Qué gas absorben las plantas de la atmósfera para realizar la fotosíntesis?,Helio,,Dióxido de carbono,,Nitrógeno,,Oxígeno,,B
+maraton-009,Entretenimiento,"¿Qué banda británica lanzó el famoso álbum ""Abbey Road"" en 1969?",The Beatles,,The Rolling Stones,,Pink Floyd,,Queen,,A
+maraton-010,Arte y Literatura,"¿Quién escribió la novela ""Cien años de soledad""?",Mario Vargas Llosa,,Julio Cortázar,,Gabriel García Márquez,,Carlos Fuentes,,C
+maraton-011,Geografía,¿En qué continente se encuentra el desierto del Sahara?,Europa,,África,,Asia,,América,,B
+maraton-012,Historia,¿Quién fue el primer emperador de Roma?,Trajano,,Julio César,,Nerón,,César Augusto,,D
+maraton-013,Deportes,¿Cada cuántos años se celebran los Juegos Olímpicos de Verano?,Cada 4 años,,Cada 5 años,,Cada 2 años,,Cada 6 años,,A
+maraton-014,Ciencias Básicas,¿Cuál es el planeta más grande del sistema solar?,Saturno,,Urano,,Júpiter,,Neptuno,,C
+maraton-015,Entretenimiento,¿Cuál es la película más taquillera de la historia del cine (sin ajustar por inflación)?,Jurassic Park,,Titanic,,Avatar,,Avengers: Endgame,,C
+maraton-016,Arte y Literatura,"¿En qué museo se encuentra exhibida la ""Mona Lisa""?",Museo del Prado,,Museo de Orsay,,Museo Británico,,Museo del Louvre,,D
+maraton-017,Geografía,¿Cuál es la capital de Australia?,Brisbane,,Melbourne,,Canberra,,Sídney,,C
+maraton-018,Historia,¿En qué año cayó el Muro de Berlín?,1979,,1989,,1991,,1985,,B
+maraton-019,Deportes,¿Qué selección de fútbol ha ganado más Copas del Mundo?,Alemania,,Italia,,Brasil,,Argentina,,C
+maraton-020,Ciencias Básicas,¿Qué órgano del cuerpo humano es responsable de bombear la sangre?,El hígado,,Los pulmones,,El corazón,,Los riñones,,C
+maraton-021,Entretenimiento,¿Cómo se llama el actor que interpreta a Iron Man en el Universo Cinematográfico de Marvel?,Robert Downey Jr.,,Mark Ruffalo,,Chris Evans,,Chris Hemsworth,,A
+maraton-022,Arte y Literatura,"¿Quién es el autor de la obra teatral ""Romeo y Julieta""?",William Shakespeare,,Molière,,Miguel de Cervantes,,Lope de Vega,,A
+maraton-023,Geografía,¿Qué país tiene la mayor cantidad de islas en el mundo?,Filipinas,,Indonesia,,Suecia,,Japón,,C
+maraton-024,Historia,¿Qué civilización antigua construyó Machu Picchu?,Los Incas,,Los Olmecas,,Los Mayas,,Los Aztecas,,A
+maraton-025,Deportes,¿Cuánto dura un partido reglamentario de baloncesto de la NBA?,60 minutos,,36 minutos,,40 minutos,,48 minutos,,D
+maraton-026,Ciencias Básicas,¿Cuál es la velocidad aproximada de la luz en el vacío?,"1,000,000 km/s",,"150,000 km/s",,"30,000 km/s",,"300,000 km/s",,D
+maraton-027,Entretenimiento,¿En qué serie de televisión aparece el personaje de Walter White?,The Walking Dead,,Better Call Saul,,Breaking Bad,,Stranger Things,,C
+maraton-028,Arte y Literatura,¿Qué famoso pintor español es considerado uno de los creadores del cubismo?,Salvador Dalí,,Francisco de Goya,,Diego Velázquez,,Pablo Picasso,,D
+maraton-029,Geografía,¿Cuál es la montaña más alta de América?,Aconcagua,,Kilimanjaro,,Monte McKinley,,Pico de Orizaba,,A
+maraton-030,Historia,¿Quién fue la primera mujer en ganar un Premio Nobel?,Marie Curie,,Rosalind Franklin,,Ada Lovelace,,Madre Teresa de Calcuta,,A
+maraton-031,Deportes,¿En qué deporte destacó Muhammad Ali?,Boxeo,,Atletismo,,Lucha libre,,Esgrima,,A
+maraton-032,Ciencias Básicas,¿Cuál es el hueso más largo del cuerpo humano?,Fémur,,Húmero,,Radio,,Tibia,,A
+maraton-033,Entretenimiento,"¿Qué cantante es conocido mundialmente como el ""Rey del Pop""?",Elvis Presley,,Freddie Mercury,,Prince,,Michael Jackson,,D
+maraton-034,Arte y Literatura,¿Cómo se llama el fiel escudero de Don Quijote de la Mancha?,Dulcinea,,Sansón Carrasco,,Sancho Panza,,Rocinante,,C
+maraton-035,Geografía,¿Qué estrecho separa a España de Marruecos?,Estrecho de Magallanes,,Estrecho de Gibraltar,,Estrecho de Bering,,Estrecho de Ormuz,,B
+maraton-036,Historia,¿En qué ciudad se firmó la Declaración de Independencia de los Estados Unidos?,Filadelfia,,Boston,,Nueva York,,Washington D.C.,,A
+maraton-037,Deportes,¿De qué color es el cinturón de mayor rango en el judo?,Rojo,,Azul,,Blanco,,Negro,,A
+maraton-038,Ciencias Básicas,¿A qué temperatura hierve el agua al nivel del mar?,120 °C,,90 °C,,80 °C,,100 °C,,D
+maraton-039,Entretenimiento,¿Cuál es el nombre del ogro verde protagonista de una famosa saga de DreamWorks?,Shrek,,Po,,Sulley,,Hulk,,A
+maraton-040,Arte y Literatura,"¿Quién esculpió ""El David"" de mármol que se encuentra en Florencia?",Miguel Ángel,,Gian Lorenzo Bernini,,Donatello,,Leonardo da Vinci,,A
+maraton-041,Geografía,¿Cuál es el país más pequeño del mundo en extensión territorial?,Mónaco,,Ciudad del Vaticano,,San Marino,,Liechtenstein,,B
+maraton-042,Historia,¿Qué evento detonó el inicio de la Primera Guerra Mundial?,El ataque a Pearl Harbor,,La invasión a Polonia,,La caída del Muro de Berlín,,El asesinato del archiduque Francisco Fernando,,D
+maraton-043,Deportes,¿Cuántos jugadores conforman un equipo de voleibol en la cancha?,5 jugadores,,7 jugadores,,6 jugadores,,8 jugadores,,C
+maraton-044,Ciencias Básicas,¿Qué partícula subatómica tiene carga eléctrica negativa?,Protón,,Positrón,,Electrón,,Neutrón,,C
+maraton-045,Entretenimiento,¿Qué instrumento musical tocaba el personaje de Lisa Simpson?,Clarinete,,Trompeta,,Saxofón,,Flauta,,C
+maraton-046,Arte y Literatura,"¿Quién escribió la saga de libros de ""Harry Potter""?",Stephenie Meyer,,Rick Riordan,,Suzanne Collins,,J.K. Rowling,,D
+maraton-047,Geografía,¿En qué país se encuentra la famosa ciudad perdida de Petra?,Siria,,Líbano,,Jordania,,Egipto,,C
+maraton-048,Historia,¿Quién fue el último emperador azteca?,Itzcóatl,,Cuauhtémoc,,Moctezuma II,,Cuitláhuac,,B
+maraton-049,Ciencias Básicas,¿Cuál es el animal terrestre más rápido del mundo?,León,,Guepardo,,Antílope,,Cebra,,B
+maraton-050,Geografía,¿Cuál es el océano más grande y profundo de la Tierra?,Océano Atlántico,,Océano Ártico,,Océano Índico,,Océano Pacífico,,D
+maraton-051,Geografía,¿En qué municipio de Nayarit se encuentra la zona arqueológica de Los Toriles?,Acaponeta,,Compostela,,Santiago Ixcuintla,,Ixtlán del Río,,D
+maraton-052,Ciencias Básicas,"Si el jugo de limón tiene un pH de 2, ¿cómo se clasifica?",Como alcalino,,Como neutro,,Como básico,,Como ácido,,D
+maraton-053,Entretenimiento,¿Qué celebración mexicana es central en la historia de la película Coco?,El Día de la Candelaria,,El Día de Muertos,,El Día de la Independencia,,El Día de la Revolución,,B
+maraton-054,Arte y Literatura,¿Qué poeta nacido en Tepic escribió el poema En paz?,Octavio Paz,,Rubén Darío,,Amado Nervo,,Jaime Sabines,,C
+maraton-055,Geografía,"Si observas la puesta del Sol desde una playa de San Blas mirando hacia el mar, ¿hacia qué punto cardinal miras aproximadamente?",Este,,Sur,,Norte,,Oeste,,D
+maraton-056,Historia,¿En qué año se promulgó en Querétaro la Constitución mexicana que estableció derechos laborales y agrarios?,1810,,1917,,1857,,1824,,B
+maraton-057,Deportes,Un jugador de baloncesto encesta tres tiros de 3 puntos y dos tiros de 2 puntos. ¿Cuántos puntos consigue?,11 puntos,,13 puntos,,17 puntos,,15 puntos,,B
+maraton-058,Ciencias Básicas,"Cuando la ropa mojada se seca al aire sin que el agua hierva, ¿qué cambio de estado ocurre?",Solidificación,,Condensación,,Sublimación,,Evaporación,,D
+maraton-059,Entretenimiento,¿Qué empresa creó las series de videojuegos Super Mario y The Legend of Zelda?,Nintendo,,Sega,,Sony,,Microsoft,,A
+maraton-060,Arte y Literatura,"En la frase «Tus ojos son dos luceros», ¿qué recurso literario se utiliza?",Metáfora,,Onomatopeya,,Hipérbole,,Aliteración,,A
+maraton-061,Geografía,¿Qué ecosistema costero caracteriza a Marismas Nacionales Nayarit?,Bosque de pinos,,Desierto de dunas sin vegetación,,Selva seca de montaña,,Manglar,,D
+maraton-062,Historia,¿Cuál de estos acontecimientos ocurrió primero en México?,La promulgación de la Constitución de 1917,,El inicio de la Revolución,,La Batalla de Puebla,,El inicio de la Independencia,,D
+maraton-063,Deportes,Una estudiante corre 5 kilómetros en 25 minutos a ritmo constante. ¿Cuál es su velocidad media?,15 km/h,,12 km/h,,10 km/h,,20 km/h,,B
+maraton-064,Ciencias Básicas,"Cuando un autobús frena de golpe, los pasajeros tienden a seguir moviéndose hacia delante. ¿Qué concepto explica esto?",La inercia,,El magnetismo,,La conductividad eléctrica,,La flotación,,A
+maraton-065,Entretenimiento,"¿Qué técnica de animación consiste en fotografiar objetos, moverlos un poco y repetir el proceso para simular movimiento?",Captura de movimiento,,Stop motion,,Animación por rotoscopia,,Animación vectorial,,B
+maraton-066,Arte y Literatura,"Si un relato comienza «Entré al salón y encontré una carta sobre mi mesa», ¿en qué persona está narrado?",Tercera persona,,Primera persona,,Forma impersonal,,Segunda persona,,B
+maraton-067,Ciencias Básicas,Una mochila cuesta 800 pesos y tiene 25 % de descuento. ¿Cuánto se paga por ella?,750 pesos,,600 pesos,,625 pesos,,700 pesos,,B
+maraton-068,Ciencias Básicas,"En una cadena alimentaria marina, ¿qué organismo produce su alimento mediante fotosíntesis?",El tiburón,,El pulpo,,El fitoplancton,,El camarón,,C
+maraton-069,Geografía,"En un mapa a escala 1:100 000, la distancia entre dos localidades es de 3 centímetros. ¿Qué distancia real representa?",300 kilómetros,,3 kilómetros,,30 kilómetros,,300 metros,,B
+maraton-070,Historia,"¿Qué cultura fundó México-Tenochtitlan, ciudad asociada con el águila sobre un nopal del escudo nacional?",La cultura zapoteca,,La cultura mexica,,La cultura maya,,La cultura olmeca,,B
+maraton-071,Deportes,¿En qué deporte se utiliza un volante o pluma en lugar de una pelota?,Tenis de mesa,,Tenis,,Squash,,Bádminton,,D
+maraton-072,Deportes,¿Cuántos metros mide una piscina olímpica de curso largo?,25 metros,,100 metros,,75 metros,,50 metros,,D
+maraton-073,Deportes,"En fútbol, ¿cómo se llama anotar tres goles en un mismo partido?",Hat-trick,,Doblete,,Tiro de esquina,,Fuera de juego,,A
+maraton-074,Deportes,"En ajedrez, ¿qué pieza se mueve en forma de L y puede saltar sobre otras piezas?",El caballo,,El alfil,,La reina,,La torre,,A
+maraton-075,Deportes,Una ciclista recorre 18 kilómetros en una hora y media a velocidad constante. ¿Cuál es su velocidad media?,27 km/h,,12 km/h,,15 km/h,,9 km/h,,B
+maraton-076,Ciencias Básicas,¿Qué orgánulo celular produce la mayor parte del ATP durante la respiración aerobia?,El aparato de Golgi,,La mitocondria,,El ribosoma,,El núcleo,,B
+maraton-077,Ciencias Básicas,Una mezcla de agua y arena se pasa por un filtro que retiene la arena. ¿Qué método de separación se utiliza?,Evaporación,,Destilación,,Imantación,,Filtración,,D
+maraton-078,Ciencias Básicas,¿Cuál es el resultado de sumar 3/4 y 1/2?,1/4,,5/4,,4/6,,3/8,,B
+maraton-079,Ciencias Básicas,¿Cuál es la unidad de resistencia eléctrica en el Sistema Internacional?,Voltio,,Ohmio,,Amperio,,Vatio,,B
+maraton-080,Ciencias Básicas,"Si dos progenitores tienen los genotipos Aa y Aa, ¿qué probabilidad hay de que una cría tenga el genotipo aa en un cruce mendeliano simple?",75 %,,50 %,,25 %,,0 %,,C
+maraton-081,Entretenimiento,"En la saga Star Wars, ¿quién es el padre de Luke Skywalker?",Obi-Wan Kenobi,,Han Solo,,Yoda,,Anakin Skywalker,,D
+maraton-082,Entretenimiento,¿Qué estudio de animación produjo la película Toy Story de 1995?,Illumination,,DreamWorks,,Studio Ghibli,,Pixar,,D
+maraton-083,Entretenimiento,¿Quién dirigió la película Jurassic Park estrenada en 1993?,James Cameron,,George Lucas,,Steven Spielberg,,Tim Burton,,C
+maraton-084,Entretenimiento,¿Qué banda británica grabó la canción Bohemian Rhapsody?,Coldplay,,Queen,,The Beatles,,Oasis,,B
+maraton-085,Entretenimiento,"En la película El viaje de Chihiro, ¿en qué animales se convierten los padres de la protagonista?",Gatos,,Cerdos,,Lobos,,Ratones,,B
+maraton-086,Arte y Literatura,¿Quién escribió la novela Pedro Páramo?,Carlos Fuentes,,Octavio Paz,,José Emilio Pacheco,,Juan Rulfo,,D
+maraton-087,Arte y Literatura,¿Qué pintora mexicana realizó la obra Las dos Fridas?,Frida Kahlo,,María Izquierdo,,Remedios Varo,,Leonora Carrington,,A
+maraton-088,Arte y Literatura,¿Cómo se llama la repetición de sonidos al final de dos o más versos a partir de la última vocal acentuada?,Estrofa,,Narración,,Rima,,Prosa,,C
+maraton-089,Arte y Literatura,"¿Qué compositor creó la Novena sinfonía, cuyo último movimiento incluye la Oda a la alegría?",Ludwig van Beethoven,,Wolfgang Amadeus Mozart,,Antonio Vivaldi,,Johann Sebastian Bach,,A
+maraton-090,Arte y Literatura,"En la frase «Te lo he dicho un millón de veces», ¿qué recurso literario se utiliza?",Hipérbole,,Aliteración,,Símil,,Onomatopeya,,A
+maraton-091,Geografía,¿Cuál es la capital del estado de Nayarit?,Santiago Ixcuintla,,San Blas,,Tepic,,Compostela,,C
+maraton-092,Geografía,¿Qué línea imaginaria divide la Tierra en los hemisferios norte y sur?,El trópico de Cáncer,,El círculo polar ártico,,El meridiano de Greenwich,,El ecuador,,D
+maraton-093,Geografía,¿Qué país sudamericano tiene costas tanto en el océano Pacífico como en el mar Caribe?,Chile,,Colombia,,Perú,,Ecuador,,B
+maraton-094,Geografía,¿Qué tipo de movimiento de placas tectónicas ocurre cuando dos placas se separan?,Convergente,,Divergente,,De subducción,,Transformante,,B
+maraton-095,Geografía,"En un mapa a escala 1:50 000, una carretera mide 4 centímetros. ¿Cuál es su longitud real?",2 kilómetros,,20 kilómetros,,200 metros,,500 metros,,A
+maraton-096,Historia,¿En qué año comenzó la Revolución mexicana?,1810,,1917,,1910,,1821,,C
+maraton-097,Historia,¿Qué presidente mexicano encabezó el gobierno republicano durante la intervención francesa y el Segundo Imperio?,Porfirio Díaz,,Benito Juárez,,Francisco I. Madero,,Lázaro Cárdenas,,B
+maraton-098,Historia,¿Qué civilización de la antigua Mesopotamia desarrolló la escritura cuneiforme?,La sumeria,,La fenicia,,La romana,,La egipcia,,A
+maraton-099,Historia,¿Qué tratado de 1848 puso fin a la guerra entre México y Estados Unidos?,Tratado de Tordesillas,,Tratado de Córdoba,,Tratado de Guadalupe Hidalgo,,Tratado de Versalles,,C
+maraton-100,Historia,¿Qué pueblo mesoamericano construyó las cabezas colosales de piedra halladas en sitios como San Lorenzo y La Venta?,El mexica,,El tolteca,,El olmeca,,El purépecha,,C

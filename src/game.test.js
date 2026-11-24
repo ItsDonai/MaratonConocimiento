@@ -1,13 +1,58 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { startGame, act, publicState, usedQuestionIds, unusedQuestions } from './game.js';
+import { startGame, breakTie, act, publicState, usedQuestionIds, unusedQuestions } from './game.js';
 
 const bank = JSON.parse(fs.readFileSync(new URL('./questions.json', import.meta.url)));
 const start = (mode = 'limited', count = 2) => startGame(bank, ['Sol', 'Luna'], mode, count);
 const choose = (s, team = 0) => act(s, { type: 'team', team });
 const answer = (s, option) => act(s, { type: 'answer', option });
 const wrong = s => s.questions[s.position].options.map((_, i) => i).filter(i => i !== s.questions[s.position].answer);
+
+test('empate tras ocho preguntas permite novena y décima sin repetir ni perder puntos', () => {
+  const data = Array.from({ length: 12 }, (_, i) => ({ ...bank[0], id: `extra-${i}` }));
+  let s = startGame(data, ['Sol', 'Luna'], 'limited', 8);
+  assert.throws(() => breakTie(s, data), /terminada en empate/);
+  for (let i = 0; i < 8; i++) {
+    s = answer(choose(s, i % 2), s.questions[s.position].answer);
+    s = act(s, { type: 'next' });
+  }
+  const original = structuredClone(s);
+  const reserved = unusedQuestions(data, usedQuestionIds([], s))[0].id;
+  s = breakTie(JSON.parse(JSON.stringify(s)), data, [reserved]);
+  assert.equal(original.questions.length, 8);
+  assert.equal(s.position, 8);
+  assert.deepEqual(s.teams.map(t => t.score), [4, 4]);
+  assert.equal(s.questions.length, 9);
+  assert.notEqual(s.questions[8].id, reserved);
+  assert.equal(publicState(s).regularTotal, 8);
+  assert.equal(publicState(s).question.answer, undefined);
+  assert.equal(s.activeTeam, null);
+  const options = wrong(s);
+  s = answer(answer(choose(s), options[0]), options[1]);
+  s = act(s, { type: 'next' });
+  assert.equal(s.phase, 'finished');
+  s = breakTie(s, data, [reserved]);
+  assert.equal(s.position, 9);
+  assert.equal(new Set(s.questions.map(q => q.id)).size, 10);
+  s = answer(choose(s, 1), s.questions[s.position].answer);
+  s = act(s, { type: 'next' });
+  assert.deepEqual(s.teams.map(t => t.score), [4, 5]);
+  assert.throws(() => breakTie(s, data), /terminada en empate/);
+});
+
+test('desempate agotado conserva el resultado sin reutilizar preguntas', () => {
+  let s = choose(start('free'));
+  while (s.phase === 'playing') {
+    if (s.activeTeam === null) s = choose(s);
+    const options = wrong(s);
+    s = answer(answer(s, options[0]), options[1]);
+    s = act(s, { type: 'next' });
+  }
+  const previous = structuredClone(s);
+  assert.throws(() => breakTie(s, bank), /No quedan preguntas/);
+  assert.deepEqual(s, previous);
+});
 
 test('nueva partida descuenta las preguntas mostradas y no las vuelve a seleccionar', () => {
   let game = start('limited', 2);

@@ -21,6 +21,61 @@ const failBoth = s => {
 };
 const confirm = s => act(s, { type: 'confirm_winner' });
 
+test('ronda de ocho preguntas ofrece desempates individuales y conserva el límite siguiente', () => {
+  let s = match(startTournament(bank, teams), 0, 1, 'questions', 8);
+  assert.throws(() => act(s, { type: 'tiebreak' }), /terminado en empate/);
+  for (let i = 0; i < 8; i++) s = correct(s, i % 2);
+  assert.equal(s.phase, 'review');
+  const before = structuredClone(s);
+  s = act(s, { type: 'tiebreak' });
+  assert.deepEqual(before.match.teams.map(t => t.score), [4, 4]);
+  assert.equal(s.match.position, 8);
+  assert.deepEqual(s.match.teams, before.match.teams);
+  assert.equal(s.usedIds.length, 9);
+  assert.equal(publicTournament(s).match.question.answer, undefined);
+  s = failBoth(s);
+  assert.equal(s.phase, 'review');
+  assert.equal(s.winnerId, null);
+  s = confirm(s);
+  assert.equal(s.matches[0].questions, 9);
+  s = act(JSON.parse(JSON.stringify(s)), { type: 'tiebreak' });
+  assert.equal(s.matches.length, 0);
+  assert.equal(s.match.position, 9);
+  assert.equal(s.match.activeTeam, null);
+  assert.deepEqual(s.match.history, []);
+  s = correct(s, 1);
+  assert.equal(s.phase, 'review');
+  assert.equal(s.winnerId, s.roster[1].id);
+  assert.throws(() => act(s, { type: 'tiebreak' }), /terminado en empate/);
+  s = confirm(s);
+  assert.equal(s.matches.length, 1);
+  assert.equal(s.matches[0].questions, 10);
+  assert.deepEqual(s.matches[0].scores, [4, 5]);
+  assert.equal(new Set(s.usedIds).size, 10);
+  s = act(s, { type: 'next_match' });
+  s = match(s, 2, 3, 'questions', 1);
+  assert.equal(s.settings.limit, 8);
+  assert.equal(s.tiebreak, false);
+});
+
+test('desempate de ronda agotada falla sin cambiar historial o preguntas usadas', () => {
+  let s = match(startTournament(bank.slice(0, 1), teams));
+  s = confirm(failBoth(s));
+  const before = structuredClone(s);
+  assert.throws(() => act(s, { type: 'tiebreak' }), /No quedan preguntas/);
+  assert.deepEqual(s, before);
+});
+
+test('desempate tras cierre manual agrega solo una pregunta antes de revisar el resultado', () => {
+  let s = match(startTournament(bank, teams), 0, 1, 'questions', 8);
+  s = act(s, { type: 'close_match' });
+  s = act(s, { type: 'tiebreak' });
+  assert.equal(s.match.position, 1);
+  s = failBoth(s);
+  assert.equal(s.phase, 'review');
+  assert.equal(s.usedIds.length, 2);
+});
+
 test('el torneo exige equipos distintos y límites válidos', () => {
   assert.throws(() => startTournament(bank, [{ name: 'A' }]));
   assert.throws(() => startTournament(bank, [{ name: 'A' }, { name: 'a' }]));

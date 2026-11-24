@@ -6,7 +6,7 @@ import './text-questions.css';
 import './celebrations.css';
 import bank from './questions.json';
 import { invoke, isTauri } from '@tauri-apps/api/core';
-import { act, startGame, publicState, validateBank, usedQuestionIds, unusedQuestions } from './game.js';
+import { act, startGame, breakTie, publicState, validateBank, usedQuestionIds, unusedQuestions } from './game.js';
 import { mountImporter } from './import-view.js';
 import { teamLogos, getTeamLogo, applyTeamColor, teamNameElement } from './team-logos.js';
 import { mountLogoSettings } from './system-logo.js';
@@ -15,6 +15,7 @@ import { mountTournamentSetup, renderTournament } from './tournament-view.js';
 import { applyTheme, normalizeTheme, mountThemeSettings } from './themes.js';
 import { updateCelebrations, winnerTrophy, animationPresets, playCelebration, stopCelebrations } from './celebrations.js';
 import { takariVictory, takariSleeping, takariWaiting } from './takari.js';
+import { createSounds, soundForAction } from './sounds.js';
 
 const encounterLogo = new URL('../logos/LOGO ENCUENTRO.png', import.meta.url).href;
 let systemLogo = encounterLogo;
@@ -40,6 +41,15 @@ async function refreshSystemLogo() {
 }
 
 const audience = new URLSearchParams(location.search).get('view') === 'participants';
+const sounds = audience ? null : createSounds();
+if (sounds) {
+  // Captura también botones de formularios y pantallas de configuración.
+  document.addEventListener('click', event => {
+    const target = event.target.closest?.('button, input[type="button"], input[type="submit"], a[href]');
+    if (target && !target.disabled && !target.closest('[inert]') && !target.hasAttribute('data-sound-toggle')) void sounds.play('click');
+  }, true);
+  window.addEventListener('pagehide', () => sounds.stop());
+}
 document.body.classList.add(audience ? 'participants' : 'conductor');
 const app = document.querySelector('#app');
 const key = 'maraton-session-v2';
@@ -74,6 +84,17 @@ function shell() {
   logo.alt = 'Logo del sistema';
   header.append(logo, el('strong', 'Maratón del Conocimiento'), el('span', audience ? 'Participantes' : 'Control del conductor', 'mode'));
   if (!audience) header.append(button('Probar animaciones', () => { stopCelebrations(); testingAnimations = true; render(); }, false, 'choice animation-test-button'));
+  if (sounds) {
+    const toggle = button(sounds.enabled ? 'Sonido: activado' : 'Sonido: silenciado', () => {
+      sounds.toggle();
+      toggle.textContent = sounds.enabled ? 'Sonido: activado' : 'Sonido: silenciado';
+      toggle.setAttribute('aria-pressed', String(sounds.enabled));
+    }, false, 'choice');
+    toggle.dataset.soundToggle = '';
+    toggle.setAttribute('aria-label', 'Activar sonidos del sistema');
+    toggle.setAttribute('aria-pressed', String(sounds.enabled));
+    header.append(toggle);
+  }
   const main = el('main');
   if (message) { const alert = el('p', message, 'error'); alert.setAttribute('role', 'alert'); main.append(alert); }
   app.append(header, main);
@@ -95,7 +116,14 @@ async function writeState(next) {
 async function change(action) {
   if (busy) return;
   busy = true; message = ''; render();
-  try { await writeState(state?.kind === 'tournament' ? tournamentAct(state, action) : act(state, action)); }
+  try {
+    const previous = state;
+    const next = state?.kind === 'tournament' ? tournamentAct(state, action)
+      : action.type === 'tiebreak' ? breakTie(state, availableBank, usedIds) : act(state, action);
+    await writeState(next);
+    const sound = soundForAction(previous, next, action);
+    if (sound) void sounds?.play(sound);
+  }
   catch (error) { message = String(error.message || error); }
   finally { busy = false; render(); }
 }
@@ -194,7 +222,7 @@ function question(main, game) {
   const meta = game.tournament;
   main.append(el('p', meta
     ? `${meta.final ? 'Final' : `Encuentro ${meta.number}`} · ${meta.mode === 'points' ? `Meta: ${meta.limit} puntos` : `Límite: ${meta.limit} preguntas`} · Pregunta ${game.position + 1}${meta.mode === 'questions' && game.position >= meta.limit ? ' · Desempate' : ''}`
-    : `${game.mode === 'free' ? 'Ronda libre' : 'Partida'} · Pregunta ${game.position + 1} de ${game.total}`, 'muted'));
+    : `${game.mode === 'free' ? 'Ronda libre' : 'Partida'} · Pregunta ${game.position + 1} de ${game.total}${game.regularTotal != null && game.position >= game.regularTotal ? ' · Desempate' : ''}`, 'muted'));
   if (!audience) {
     const controls = el('section', undefined, 'card');
     controls.append(el('h2', '¿Qué equipo comienza?'));
@@ -253,7 +281,7 @@ function question(main, game) {
     controls.append(button(meta ? 'Cerrar pregunta y continuar' : game.position + 1 === game.total ? 'Finalizar y ver resultado' : 'Siguiente pregunta', () => change({ type: 'next' }), !game.resolved && game.attempts.length !== 2));
     if (meta) {
       controls.append(button('Cerrar enfrentamiento', () => change({ type: 'close_match' }), !meta.manualRounds && game.teams[0].score === game.teams[1].score));
-      controls.append(el('p', meta.manualRounds ? 'La ronda termina al llegar al límite, incluso en empate. Los siguientes equipos se eligen manualmente.' : 'Al cerrar el enfrentamiento gana quien tenga más puntos. Si hay empate, continúa el desempate.', 'muted'));
+      controls.append(el('p', meta.manualRounds ? 'Al terminar en empate podrás agregar una pregunta de desempate o confirmar el empate. Los siguientes equipos se eligen manualmente.' : 'Al cerrar el enfrentamiento gana quien tenga más puntos. Si hay empate, continúa el desempate.', 'muted'));
     }
     controls.append(el('p', 'Puedes avanzar después de un acierto o de dos errores. Revelar es opcional. El avance siempre es manual.', 'muted'));
     main.append(controls);
@@ -378,6 +406,11 @@ function renderScreen() {
     scoreboard(result, game);
     result.append(el('p', `Partida terminada · ${game.total} preguntas.`));
     main.append(result);
+    if (!audience && a.score === b.score) {
+      const remaining = unusedQuestions(availableBank, usedQuestionIds(usedIds, state)).length;
+      main.append(button('Desempatar con otra pregunta', () => change({ type: 'tiebreak' }), !remaining));
+      main.append(el('p', remaining ? 'Se conserva el marcador. Si continúa el empate, podrás agregar otra pregunta.' : 'No quedan preguntas nuevas para desempatar.', 'muted'));
+    }
   } else { scoreboard(main, game); question(main, game); }
   if (!audience) main.append(button('Nueva partida', async () => {
     if (!window.confirm('¿Volver a la configuración? Se borrará el marcador actual.')) return;

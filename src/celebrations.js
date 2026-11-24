@@ -1,4 +1,5 @@
 import confetti from 'canvas-confetti';
+import { takariVictory } from './takari.js';
 
 // Se mantienen fuera del árbol que se reconstruye al actualizar el marcador.
 let canvas;
@@ -12,7 +13,7 @@ let feedbackSymbol;
 export const animationPresets = [
   { id: 'correct', name: 'Confeti de acierto' },
   { id: 'incorrect', name: 'Respuesta incorrecta · ✕' },
-  { id: 'winner', name: 'Copa y fuegos artificiales' },
+  { id: 'winner', name: 'Takari con copa y fuegos artificiales' },
   { id: 'takari', name: 'Takari con copa y fuego' },
   { id: 'takari-sleeping', name: 'Takari durmiendo · espera' },
 ];
@@ -89,7 +90,7 @@ export function playCelebration(type, target = document) {
     return;
   }
   if (type === 'takari') {
-    target.querySelector('.takari-victory')?.classList.add('is-playing');
+    target.querySelector('.takari-victory:not([hidden])')?.classList.add('is-playing');
     return;
   }
   if (type === 'winner') {
@@ -98,7 +99,7 @@ export function playCelebration(type, target = document) {
       const burst = () => fire({ particleCount: 65, spread: 360, startVelocity: 27, gravity: .35, decay: .92, ticks: 100, scalar: .8, shapes: ['circle', 'star'], flat: true, colors, origin });
       if (i === 0) burst(); else timers.push(setTimeout(burst, i * 450));
     });
-    target.querySelector('.winner-trophy')?.animate([{ transform: 'scale(.7) rotate(-10deg)', opacity: .4 }, { transform: 'scale(1.08) rotate(4deg)', opacity: 1, offset: .65 }, { transform: 'scale(1) rotate(0)' }], { duration: 650, easing: 'ease-out' });
+    target.querySelector('.winner-mascot')?.classList.add('is-playing');
   } else if (type === 'correct') {
     const options = { particleCount: 45, spread: 65, startVelocity: 32, ticks: 150, colors: ['#a875e8', '#ffcd55', '#ff95af', '#92b8ff', '#8cdda3'] };
     fire({ ...options, angle: 60, origin: { x: 0, y: .65 } });
@@ -108,10 +109,8 @@ export function playCelebration(type, target = document) {
 }
 
 export function winnerTrophy() {
-  const node = document.createElement('div'); node.className = 'winner-trophy';
-  node.setAttribute('role', 'img'); node.setAttribute('aria-label', 'Copa del ganador'); node.textContent = '🏆';
-  const check = document.createElement('span'); check.className = 'winner-check'; check.textContent = '✓'; check.setAttribute('aria-hidden', 'true');
-  node.append(check);
+  const node = takariVictory();
+  node.classList.add('winner-mascot');
   return node;
 }
 
